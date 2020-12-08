@@ -63,16 +63,43 @@ impl  Chip8CPU{
     pub fn new() ->  Chip8CPU{
 
         let v : [u8; 16]= [0; 16];
-        let memory : [u8; 4096] = [0; 4096]; 
+        let mut memory : [u8; 4096] = [0; 4096]; 
         let stack = [0; 16];
-        let sp = 0; 
 
-        let mut rng = rand::thread_rng();
+        let rng = rand::thread_rng();
         let pc : u16 = START_ADDR as u16; 
         let index = 0; 
+        let sp = 0; 
+        let delay_timer = 0; // both delay timers start at 0.
+        let sound_timer = 0;
+
+        // write the fontset into memory starting at 0x50
+        memory[0x50..].copy_from_slice(&fontset) ;
+
+        Chip8CPU { 
+            v,
+            memory, 
+            stack, 
+            sp, 
+            pc, 
+            index, 
+            delay_timer, 
+            sound_timer,
+            rng
+        }
         
-        
-        unimplemented!()
+    }
+
+    // reset memory and registers
+    pub fn reset(&mut self) { 
+
+        self.v.iter_mut().for_each(|m| *m = 0); // clear out registers
+        self.memory[START_ADDR..].iter_mut().for_each(|m| *m = 0);  // clear out any possibly loaded ROM
+        self.pc = START_ADDR as u16; 
+        self.delay_timer = 0; 
+        self.sound_timer = 0;
+        self.sp = 0;
+        self.index = 0;
 
     }
 
@@ -102,6 +129,15 @@ pub trait Keypad {
 
 pub trait Display {  
 
+}
+
+#[cfg(test)]
+mod tests{ 
+
+    #[test]
+    fn init_test() {
+        unimplemented!();
+    }
 }
 
 
