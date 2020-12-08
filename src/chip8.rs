@@ -8,7 +8,7 @@ const START_ADDR : usize = 0x200;
 
 const FONTSET_SIZE : usize  = 80; 
 
-const fontset : [u8; FONTSET_SIZE]  = [
+const FONTSET : [u8; FONTSET_SIZE]  = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
 	0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -28,6 +28,7 @@ const fontset : [u8; FONTSET_SIZE]  = [
 ];
 
 // Chip-8 CPU capable of reading and processing instructions
+// more information on chip-8 can be found at http://devernay.free.fr/hacks/chip8/C8TECH10.HTM 
 pub struct Chip8CPU { 
 
     // general purpose registers
@@ -72,7 +73,7 @@ impl  Chip8CPU{
         let sound_timer = 0;
 
         // write the fontset into memory starting at 0x50
-        memory[0x50..0x50+fontset.len()].copy_from_slice(&fontset) ;
+        memory[0x50..0x50+FONTSET.len()].copy_from_slice(&FONTSET) ;
 
         Chip8CPU { 
             v,
@@ -163,7 +164,7 @@ mod tests{
     }
 
     fn check_fontset(arr : &[u8]) { 
-        assert_eq!(&arr[0x50..0x50+fontset.len()], &fontset[..])
+        assert_eq!(&arr[0x50..0x50+FONTSET.len()], &FONTSET[..])
     }
 }
 
