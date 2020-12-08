@@ -56,6 +56,9 @@ pub struct Chip8CPU {
 impl  Chip8CPU{ 
 
     pub fn new() ->  Chip8CPU{
+
+        let v : [u8; 16]= [0; 16];
+        let memory : [u8; 4096] = [0; 4096]; 
         
         unimplemented!()
 
