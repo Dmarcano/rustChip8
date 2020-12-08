@@ -1,3 +1,9 @@
+use std::fs::File;
+use std::io::prelude::*; 
+use std::io;
+
+//TODO does usize break anything later on?
+const START_ADDR : usize = 0x200; 
 
 // Chip-8 CPU capable of reading and processing instructions
 pub struct Chip8<T, V> where T : Keypad, V : Display{ 
@@ -34,8 +40,23 @@ pub struct Chip8<T, V> where T : Keypad, V : Display{
 
 impl<T: Keypad,V : Display>  Chip8<T,V>{ 
 
-    pub fn load_rom(&mut self, filename : String) { 
+    pub fn new() ->  Chip8<T,V>{
+        
+        unimplemented!()
 
+    }
+
+    pub fn load_rom_from_file(&mut self, filename : String) { 
+        
+        let file = std::fs::File::open(std::path::Path::new(&filename)).unwrap();
+        self.load_rom_from_bytes(file);
+    }
+
+    fn load_rom_from_bytes< U : std::io::Read>(&mut self, source : U) { 
+
+        for (i, byte) in source.bytes().enumerate() { 
+            self.memory[START_ADDR  + i] = byte.unwrap(); 
+        }
     }
 
 }
