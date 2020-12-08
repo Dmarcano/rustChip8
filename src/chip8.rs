@@ -27,7 +27,7 @@ const fontset : [u8; FONTSET_SIZE]  = [
 ];
 
 // Chip-8 CPU capable of reading and processing instructions
-pub struct Chip8<T, V> where T : Keypad, V : Display{ 
+pub struct Chip8CPU { 
 
     // general purpose registers
     v : [u8 ; 16], 
@@ -50,18 +50,12 @@ pub struct Chip8<T, V> where T : Keypad, V : Display{
     delay_timer : u8 ,
 
     sound_timer : u8,
-
-    // A type that handles the input and decodes to a keypad input for chip-8
-    keypad : T, 
-
-    // a type that implements reading from the display buffer and displaying the chip-8 pixels
-    display : V, 
 }
 
 
-impl<T: Keypad,V : Display>  Chip8<T,V>{ 
+impl  Chip8CPU{ 
 
-    pub fn new() ->  Chip8<T,V>{
+    pub fn new() ->  Chip8CPU{
         
         unimplemented!()
 
