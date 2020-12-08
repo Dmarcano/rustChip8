@@ -53,8 +53,6 @@ pub struct Chip8CPU {
     sound_timer : u8,
 
     rng : rand::prelude::ThreadRng
-
-    
 }
 
 
@@ -74,7 +72,7 @@ impl  Chip8CPU{
         let sound_timer = 0;
 
         // write the fontset into memory starting at 0x50
-        memory[0x50..].copy_from_slice(&fontset) ;
+        memory[0x50..0x50+fontset.len()].copy_from_slice(&fontset) ;
 
         Chip8CPU { 
             v,
@@ -95,6 +93,7 @@ impl  Chip8CPU{
 
         self.v.iter_mut().for_each(|m| *m = 0); // clear out registers
         self.memory[START_ADDR..].iter_mut().for_each(|m| *m = 0);  // clear out any possibly loaded ROM
+        self.stack.iter_mut().for_each(|m| *m = 0);
         self.pc = START_ADDR as u16; 
         self.delay_timer = 0; 
         self.sound_timer = 0;
@@ -114,7 +113,6 @@ impl  Chip8CPU{
     }
 
     fn load_rom_from_bytes< U : std::io::Read>(&mut self, source : U) { 
-
         for (i, byte) in source.bytes().enumerate() { 
             self.memory[START_ADDR  + i] = byte.unwrap(); 
         }
@@ -134,9 +132,38 @@ pub trait Display {
 #[cfg(test)]
 mod tests{ 
 
+    use super::*;
+
     #[test]
     fn init_test() {
-        unimplemented!();
+        let mut cpu = Chip8CPU::new(); 
+
+        let exp_v : [u8; 16]= [0; 16];
+        let exp_pc = START_ADDR as u16; 
+        let exp_stack = [0; 16];
+        
+        check_fontset(&cpu.memory);
+        assert_eq!(cpu.v, exp_v);
+        assert_eq!(exp_pc, cpu.pc);
+        assert_eq!(exp_stack, cpu.stack);
+
+        cpu.memory[START_ADDR + 1] = 10;
+        cpu.stack[0] = 0x23;
+        cpu.pc = START_ADDR as u16 + 1;
+        cpu.v[3] = 100;
+
+        cpu.reset();
+
+        check_fontset(&cpu.memory);
+        assert_eq!(cpu.v, exp_v);
+        assert_eq!(exp_pc, cpu.pc);
+        assert_eq!(exp_stack, cpu.stack);
+
+
+    }
+
+    fn check_fontset(arr : &[u8]) { 
+        assert_eq!(&arr[0x50..0x50+fontset.len()], &fontset[..])
     }
 }
 
