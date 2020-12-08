@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*; 
 use std::io;
+use rand::Rng; 
 
 //TODO does usize break anything later on?
 const START_ADDR : usize = 0x200; 
@@ -50,6 +51,10 @@ pub struct Chip8CPU {
     delay_timer : u8 ,
 
     sound_timer : u8,
+
+    rng : rand::prelude::ThreadRng
+
+    
 }
 
 
@@ -59,9 +64,20 @@ impl  Chip8CPU{
 
         let v : [u8; 16]= [0; 16];
         let memory : [u8; 4096] = [0; 4096]; 
+        let stack = [0; 16];
+        let sp = 0; 
+
+        let mut rng = rand::thread_rng();
+        let pc : u16 = START_ADDR as u16; 
+        let index = 0; 
+        
         
         unimplemented!()
 
+    }
+
+    fn random_byte(&mut self) -> u8 { 
+        self.rng.gen::<u8>()
     }
 
     pub fn load_rom_from_file(&mut self, filename : String) { 
