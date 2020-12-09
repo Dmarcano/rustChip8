@@ -110,11 +110,17 @@ impl  Chip8CPU{
         self.load_rom_from_bytes(file);
     }
 
-    /// given some iterable of bytes, loads the bytes onto Chip8's memory
-    fn load_rom_from_bytes< U : std::io::Read>(&mut self, source : U) { 
-        for (i, byte) in source.bytes().enumerate() { 
-            self.memory[START_ADDR  + i] = byte.unwrap(); 
-        }
+    /// Emulates a single CPU cycle for the Chip-8 CPU
+    /// 
+    /// 1. Fetches an opcode from memory,
+    /// 2. Decodes the opcode into an instruction, 
+    /// 3. Executes the instruction storing any results
+    pub fn cycle(&mut self) { 
+
+        let opcode = self.fetch_opcode(); 
+        self.increment_pc();
+        self.process_opcode(opcode); 
+
     }
 
 }
@@ -128,7 +134,7 @@ impl Chip8CPU {
     }
 
     fn process_opcode(&mut self, opcode : u16 ) { 
-
+        unimplemented!()
     }
 
     fn random_byte(&mut self) -> u8 { 
@@ -142,6 +148,13 @@ impl Chip8CPU {
 
     fn decrement_pc(&mut self) { 
         self.pc -=2;
+    }
+
+    /// given some iterable of bytes, loads the bytes onto Chip8's memory
+    fn load_rom_from_bytes< U : std::io::Read>(&mut self, source : U) { 
+        for (i, byte) in source.bytes().enumerate() { 
+            self.memory[START_ADDR  + i] = byte.unwrap(); 
+        }
     }
 
 }
