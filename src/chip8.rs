@@ -197,13 +197,13 @@ impl Chip8CPU {
     }
 
     /// given an opcode it compares Vx to kk in some way. Incrementing on a truthy Val 
-    /// for opcodes ```0x3xkk => skips if Vx == kk```
-    /// for opcodes ```0x4xkk => skips if Vx != kk```
+    /// 1. opcodes ```0x3xkk => skips if Vx == kk```
+    /// 2. opcodes ```0x4xkk => skips if Vx != kk```
     fn skip_vx(&mut self, opcode : u16) { 
         // both SNE and SE Vx byte
        
-        let instruction = (opcode & 0xF000) as u8;
-        let vx = (opcode & 0x0F00>> 8) as u8; 
+        let instruction = ((opcode & 0xF000) >> 12) as u8;
+        let vx = (opcode & 0x0F00 >> 8) as u8; 
         let val = (opcode & 0x00FF) as u8; 
 
         let equals =  self.v[vx as usize] == val;
@@ -221,9 +221,40 @@ impl Chip8CPU {
     /// 
     /// ```opcodes => 0x5xy0```
     fn skip_vx_vy(&mut self, opcode : u16) { 
+        let vx = ((opcode & 0x0F00) >> 8) as u8;
+        let vy = ((opcode & 0x00F0) >> 8) as u8; 
+
+        if self.v[vx as usize] == self.v[vy as usize] { 
+            self.increment_pc();
+        }
 
     }
 
+    /// Mutates Vx according to the opcode
+    /// 
+    /// 1. ```opcodes => 0x6xkk``` sets ```Vx``` as the value ```kk```
+    /// 2. ```opcodes => 0x7xkk``` adds the val ```kk``` to ```Vx```
+
+    fn set_vx(&mut self, opcode : u16) { 
+        let instruction = (opcode * 0xF000) >> 12; 
+        let vx = ((opcode & 0x0F00) >> 8) as u8; 
+        let val = (opcode & 0x00FF) as u8; 
+
+        match instruction {
+            6 => {
+                self.v[vx as usize] = val; 
+            },
+            7 => {
+                self.v[vx as usize] += val; 
+            },
+            _ => {panic!("Given a bad opcode of value {}", opcode)}
+        }
+    }
+
+    fn set_vx_vy(&mut self, opcode : u16) { 
+        let vx = ((opcode & 0x0F00) >> 8) as u8; 
+        
+    }
 
 
 }
