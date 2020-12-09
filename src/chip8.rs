@@ -103,10 +103,6 @@ impl  Chip8CPU{
 
     }
 
-    fn random_byte(&mut self) -> u8 { 
-        self.rng.gen::<u8>()
-    }
-
     pub fn load_rom_from_file(&mut self, filename : String) { 
         
         let file = std::fs::File::open(std::path::Path::new(&filename)).unwrap();
@@ -117,6 +113,33 @@ impl  Chip8CPU{
         for (i, byte) in source.bytes().enumerate() { 
             self.memory[START_ADDR  + i] = byte.unwrap(); 
         }
+    }
+
+}
+
+
+// private helper functions
+impl Chip8CPU { 
+
+    fn fetch_opcode(&self) -> u16 { 
+        (self.memory[self.pc as usize] as u16) << 8 | (self.memory[(self.pc + 1) as usize]) as u16
+    }
+
+    fn process_opcode(&mut self, opcode : u16 ) { 
+
+    }
+
+    fn random_byte(&mut self) -> u8 { 
+        self.rng.gen::<u8>()
+    }
+
+    // each opcode is 2 bytes and the PC is indexed by 1 byte.
+    fn increment_pc(&mut self) { 
+        self.pc += 2; 
+    }
+
+    fn decrement_pc(&mut self) { 
+        self.pc -=2;
     }
 
 }
