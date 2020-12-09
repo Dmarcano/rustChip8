@@ -27,26 +27,26 @@ const FONTSET : [u8; FONTSET_SIZE]  = [
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 ];
 
-// Chip-8 CPU capable of reading and processing instructions
-// more information on chip-8 can be found at http://devernay.free.fr/hacks/chip8/C8TECH10.HTM 
+/// Chip-8 CPU capable of reading and processing instructions
+/// more information on chip-8 can be found at http://devernay.free.fr/hacks/chip8/C8TECH10.HTM 
 pub struct Chip8CPU { 
 
-    // general purpose registers
+    /// general purpose registers
     v : [u8 ; 16], 
 
-    // chip-8 has 4Kb of memory
+    /// chip-8 has 4Kb of memory
     memory : [u8; 4096], 
 
-    // index register stores memory addresses for use in operations.
+    /// index register stores memory addresses for use in operations.
     index : u16, 
 
-    // program counter keeps track of which memory address to fetch next for instruction decoding
+    /// program counter keeps track of which memory address to fetch next for instruction decoding
     pc : u16,
     
-    // stack keeps track of memory addresses 
+    /// stack keeps track of memory addresses 
     stack : [u16 ; 16],
 
-    // stack pointer
+    /// stack pointer
     sp : u16,
 
     delay_timer : u8 ,
@@ -56,9 +56,10 @@ pub struct Chip8CPU {
     rng : rand::prelude::ThreadRng
 }
 
-
+// public methods
 impl  Chip8CPU{ 
 
+    
     pub fn new() ->  Chip8CPU{
 
         let v : [u8; 16]= [0; 16];
@@ -89,7 +90,7 @@ impl  Chip8CPU{
         
     }
 
-    // reset memory and registers
+    /// resets the memory, registers, stack and pc of the Chip-8
     pub fn reset(&mut self) { 
 
         self.v.iter_mut().for_each(|m| *m = 0); // clear out registers
@@ -109,6 +110,7 @@ impl  Chip8CPU{
         self.load_rom_from_bytes(file);
     }
 
+    /// given some iterable of bytes, loads the bytes onto Chip8's memory
     fn load_rom_from_bytes< U : std::io::Read>(&mut self, source : U) { 
         for (i, byte) in source.bytes().enumerate() { 
             self.memory[START_ADDR  + i] = byte.unwrap(); 
@@ -141,6 +143,75 @@ impl Chip8CPU {
     fn decrement_pc(&mut self) { 
         self.pc -=2;
     }
+
+}
+
+// Op-Code implementations
+impl Chip8CPU { 
+
+    fn clear_display(&mut self) { 
+        // TODO Clear Display Buffer
+    }
+
+    /// Returns from subroutine using the stack to return to before the call was made
+    /// 
+    /// for ```opcode => 00EE```
+    fn ret(&mut self) { 
+        // return from a subroutine
+        self.pc = self.stack[self.sp as usize]; 
+        self.sp -= 1;
+    }
+
+    /// jumps to a specified address in the opcode
+    /// 
+    /// for ```opcode => 0x1nnn```
+    fn jmp_addr(&mut self, opcode : u16) { 
+        // jump to a given address
+        let addr = opcode & 0x0FFF;
+        self.pc = addr;
+    }
+
+    /// given an opcode representing a subroutine, it jumps the ```pc``` to the memory address while saving the previous 
+    /// address in the stack
+    /// 
+    /// for ```opcode => 0x2nnn```
+    fn call_addr(&mut self, opcode : u16) {
+        // calls a function 
+        self.stack[self.sp as usize] = self.pc;
+        self.sp += 1;
+        self.jmp_addr(opcode); 
+
+    }
+
+    /// given an opcode it compares Vx to kk in some way. Incrementing on a truthy Val 
+    /// for opcodes ```0x3xkk => skips if Vx == kk```
+    /// for opcodes ```0x4xkk => skips if Vx != kk```
+    fn skip_vx(&mut self, opcode : u16) { 
+        // both SNE and SE Vx byte
+       
+        let instruction = (opcode & 0xF000) as u8;
+        let vx = (opcode & 0x0F00>> 8) as u8; 
+        let val = (opcode & 0x00FF) as u8; 
+
+        let equals =  self.v[vx as usize] == val;
+
+        match (instruction, equals) { 
+            (3, true) => {self.increment_pc()},
+            (3, false) => {},
+            (4, true) => {}, 
+            (4, false) => {self.increment_pc()}, 
+            (_,_) => {panic!("Given a bad opcode of value {}", opcode)}
+        }
+    }
+
+    /// Skips next instruction if ```Vx == Vy```
+    /// 
+    /// ```opcodes => 0x5xy0```
+    fn skip_vx_vy(&mut self, opcode : u16) { 
+
+    }
+
+
 
 }
 
