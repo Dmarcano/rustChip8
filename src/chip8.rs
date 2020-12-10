@@ -206,7 +206,7 @@ impl Chip8CPU {
         // both SNE and SE Vx byte
        
         let instruction = ((opcode & 0xF000) >> 12) as u8;
-        let vx = (opcode & 0x0F00 >> 8) as u8; 
+        let vx = ((opcode & 0x0F00) >> 8) as u8; 
         let val = (opcode & 0x00FF) as u8; 
 
         let equals =  self.v[vx as usize] == val;
@@ -407,9 +407,18 @@ mod tests{
 
     }
 
-    /// Testing of the Chip-8 CPU's ability to jump addresses based on value of register
+    /// Testing of the Chip-8 CPU's ability skip instructions based on values in registers
     #[test]
     fn skip_byte_tests() { 
+        let mut cpu = Chip8CPU::new(); 
+        let mut opcode = 0x6123; // set register v[1] to 0x23 
+        cpu.set_vx(opcode); 
+
+
+        opcode = 0x3123; // compare v[1] to 0x23 and Skip next instruction if they are equal
+        cpu.skip_vx(opcode); 
+
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); 
 
     }
 
