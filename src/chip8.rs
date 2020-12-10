@@ -461,6 +461,60 @@ mod tests{
         assert_eq!(cpu.v[1], x_val ^ y_val);
     }
 
+    /// Testing of the Chip-8 CPU's ability to perform arithmetic instructions based on the state of two registers
+    #[test]
+    fn register_arithmetic_test() {
+        let mut cpu = Chip8CPU::new(); 
+        let x_val = 0x56; 
+        let y_val = 0x33;
+
+        // Add registers no overflow
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        let mut opcode = 0x8124; // add v[1] and v[2] 
+        cpu.set_vx_vy(opcode);
+        let expected = x_val + y_val; 
+        assert_eq!(cpu.v[1], expected); 
+        assert_eq!(cpu.v[0xF], 0); 
+        // Add registers with overflow
+        set_registers(&mut cpu, &[(1, x_val), (2,0xFA)]);
+        opcode = 0x8124; // add v[1] and v[2] 
+        cpu.set_vx_vy(opcode);
+        let (expected,_) = x_val.overflowing_add(0xFA);
+        assert_eq!(cpu.v[1], expected); 
+        assert_eq!(cpu.v[0xF], 1); 
+
+        // Subtract registers no overflow with VF expected to be set to 1 since X > Y
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8125; // subtract borrow
+        cpu.set_vx_vy(opcode); 
+        let expected = x_val - y_val;
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 1); 
+        // Subtract registers with overflow with VF expected to be set to 0 since X <> Y
+        set_registers(&mut cpu, &[(1, 0x01), (2,y_val)]);
+        opcode = 0x8125;
+        cpu.set_vx_vy(opcode); 
+        let (expected, _)= u8::overflowing_sub(0x01, y_val) ;// 0x01.overflowing_sub(y_val);
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 0); 
+
+        // Subtract registers no overflow with VF expected to be set to 0 since X < Y
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8127; // subtract no borrow
+        cpu.set_vx_vy(opcode); 
+        let expected = x_val - y_val;
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 0); 
+        // Subtract registers with overflow with VF expected to be set to 0 since X > Y
+        set_registers(&mut cpu, &[(1, 0x01), (2,y_val)]);
+        opcode = 0x8127;
+        cpu.set_vx_vy(opcode); 
+        let (expected, _)= u8::overflowing_sub(0x01, y_val) ;// 0x01.overflowing_sub(y_val);
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 1); 
+
+    }
+
     // uses array of (register idx, register val) to set register easily
     fn set_registers( cpu : &mut Chip8CPU, register_vals : &[(u8, u8)]) { 
 
