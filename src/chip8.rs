@@ -54,7 +54,10 @@ pub struct Chip8CPU {
 
     sound_timer : u8,
 
-    rng : rand::prelude::ThreadRng
+    rng : rand::prelude::ThreadRng,
+
+    /// the display buffer that is used to draw graphics
+    disp_buf : [u8 ; 64*32]
 }
 
 // public methods
@@ -66,6 +69,7 @@ impl  Chip8CPU{
         let v : [u8; 16]= [0; 16];
         let mut memory : [u8; 4096] = [0; 4096]; 
         let stack = [0; 16];
+        let disp_buf = [0; 32*64];
 
         let rng = rand::thread_rng();
         let pc : u16 = START_ADDR as u16; 
@@ -86,7 +90,8 @@ impl  Chip8CPU{
             index, 
             delay_timer, 
             sound_timer,
-            rng
+            rng,
+            disp_buf
         }
         
     }
@@ -97,12 +102,12 @@ impl  Chip8CPU{
         self.v.iter_mut().for_each(|m| *m = 0); // clear out registers
         self.memory[START_ADDR..].iter_mut().for_each(|m| *m = 0);  // clear out any possibly loaded ROM
         self.stack.iter_mut().for_each(|m| *m = 0);
+        self.disp_buf.iter_mut().for_each(|m| *m = 0);
         self.pc = START_ADDR as u16; 
         self.delay_timer = 0; 
         self.sound_timer = 0;
         self.sp = 0;
         self.index = 0;
-
     }
 
     pub fn load_rom_from_file(&mut self, filename : String) { 
@@ -365,11 +370,13 @@ mod tests{
         let exp_v : [u8; 16]= [0; 16];
         let exp_pc = START_ADDR as u16; 
         let exp_stack = [0; 16];
+        let exp_disp_buf = [0; 32 * 64]; 
         
         check_fontset(&cpu.memory);
         assert_eq!(cpu.v, exp_v);
         assert_eq!(exp_pc, cpu.pc);
         assert_eq!(exp_stack, cpu.stack);
+        assert_eq!(exp_disp_buf, cpu.disp_buf);
 
         cpu.memory[START_ADDR + 1] = 10;
         cpu.stack[0] = 0x23;
@@ -382,6 +389,7 @@ mod tests{
         assert_eq!(cpu.v, exp_v);
         assert_eq!(exp_pc, cpu.pc);
         assert_eq!(exp_stack, cpu.stack);
+        assert_eq!(exp_disp_buf, cpu.disp_buf);
 
 
     }
