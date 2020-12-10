@@ -432,6 +432,44 @@ mod tests{
         assert_eq!(cpu.pc, (START_ADDR + 4) as u16); 
     }
 
+    /// Testing of the Chip-8 CPU's ability to perform logical instructions based on the state of two registers
+    #[test]
+    fn register_logical_ops_test() {
+        let mut cpu = Chip8CPU::new(); 
+        let x_val = 0x56; 
+        let y_val = 0x33;
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+
+        // SET TEST
+        let mut opcode = 0x8120; // set vx equal to vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], cpu.v[2]);
+        // OR TEST
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8121; // set vx to vx | vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], x_val | y_val);
+        // AND TEST 
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8122; // set vx to vx & vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], x_val & y_val);
+         // XOR TEST 
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8123; // set vx to vx ^ vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], x_val ^ y_val);
+    }
+
+    // uses array of (register idx, register val) to set register easily
+    fn set_registers( cpu : &mut Chip8CPU, register_vals : &[(u8, u8)]) { 
+
+        for (register, val) in register_vals { 
+            let opcode =( 0x6000 | (*register as u16)<< 8 )| (*val as u16); 
+            cpu.set_vx(opcode); 
+        }
+    }
+
     fn check_fontset(arr : &[u8]) { 
         assert_eq!(&arr[0x50..0x50+FONTSET.len()], &FONTSET[..])
     }
