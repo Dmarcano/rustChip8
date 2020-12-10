@@ -239,7 +239,7 @@ impl Chip8CPU {
     /// 2. ```opcodes => 0x7xkk``` adds the val ```kk``` to ```Vx```
 
     fn set_vx(&mut self, opcode : u16) { 
-        let instruction = (opcode * 0xF000) >> 12; 
+        let instruction = (opcode & 0xF000) >> 12; 
         let vx = ((opcode & 0x0F00) >> 8) as u8; 
         let val = (opcode & 0x00FF) as u8; 
 
@@ -370,6 +370,32 @@ mod tests{
         assert_eq!(exp_pc, cpu.pc);
         assert_eq!(exp_stack, cpu.stack);
 
+
+    }
+
+    /// tests for simple setting and mutation of registers
+    #[test]
+    fn register_set_tests() {
+
+        let mut cpu = Chip8CPU::new(); 
+
+        let opcode = 0x6123; // sets register v[1] to 0x23
+        cpu.set_vx(opcode);
+
+        // assert_eq!(cpu.v[1], 0x23); 
+
+    }
+
+    /// Testing of the Chip-8 CPU's ability to properly handle jump direct jump, call, and ret commands
+    #[test]
+    fn jumping_tests() {
+
+        // unimplemented!();
+    }
+
+    /// Testing of the Chip-8 CPU's ability to jump addresses based on value of register
+    #[test]
+    fn skip_byte_tests() { 
 
     }
 
