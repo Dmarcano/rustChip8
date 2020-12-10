@@ -417,9 +417,19 @@ mod tests{
 
         opcode = 0x3123; // compare v[1] to 0x23 and Skip next instruction if they are equal
         cpu.skip_vx(opcode); 
-
         assert_eq!(cpu.pc, (START_ADDR + 2) as u16); 
 
+        opcode = 0x4123; // compare v[1] to 0x23 and Skip next instruction if they are NOT equal
+        cpu.skip_vx(opcode);
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); 
+
+        opcode = 0x4124; // compare v[1] to 0x24 and Skip next instruction if they are NOT equal
+        cpu.skip_vx(opcode);
+        assert_eq!(cpu.pc, (START_ADDR + 4) as u16); 
+
+        opcode = 0x3124; // compare v[1] to 0x24 and Skip next instruction if they are equal
+        cpu.skip_vx(opcode);
+        assert_eq!(cpu.pc, (START_ADDR + 4) as u16); 
     }
 
     fn check_fontset(arr : &[u8]) { 
