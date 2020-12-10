@@ -379,11 +379,14 @@ mod tests{
 
         let mut cpu = Chip8CPU::new(); 
 
-        let opcode = 0x6123; // sets register v[1] to 0x23
+        let mut opcode = 0x6123; // sets register v[1] to 0x23
         cpu.set_vx(opcode);
 
-        // assert_eq!(cpu.v[1], 0x23); 
-
+        opcode = 0x7101; // sets v[1] += 1
+        assert_eq!(cpu.v[1], 0x23); 
+        
+        cpu.set_vx(opcode); 
+        assert_eq!(cpu.v[1], 0x24); 
     }
 
     /// Testing of the Chip-8 CPU's ability to properly handle jump direct jump, call, and ret commands
