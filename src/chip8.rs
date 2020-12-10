@@ -328,6 +328,8 @@ impl Chip8CPU {
         }
     }
 
+    // TODO Test functions below
+
     /// Set I = nnn.
     /// 
     /// ```opcode => 0xAnnn```
