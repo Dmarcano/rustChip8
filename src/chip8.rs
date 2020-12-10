@@ -142,10 +142,12 @@ impl Chip8CPU {
     }
 
     // each opcode is 2 bytes and the PC is indexed by 1 byte.
+    /// increments the program counter by 1 instruction
     fn increment_pc(&mut self) { 
         self.pc += 2; 
     }
 
+    /// decrements the progam counter by 1 instruction
     fn decrement_pc(&mut self) { 
         self.pc -=2;
     }
@@ -217,10 +219,10 @@ impl Chip8CPU {
         }
     }
 
-    /// Skips next instruction if ```Vx == Vy```
+    /// Skips next instruction based on ```Vx``` === ```Vy```
     /// 
-    /// ```opcodes => 0x5xy0```
-    fn skip_vx_vy(&mut self, opcode : u16) { 
+    /// 1. ```opcodes => 0x5xy0``` Skips if Vx == Vy
+    fn skip_vx_vy_eq(&mut self, opcode : u16) { 
         let vx = ((opcode & 0x0F00) >> 8) as u8;
         let vy = ((opcode & 0x00F0) >> 8) as u8; 
 
@@ -247,16 +249,78 @@ impl Chip8CPU {
             7 => {
                 self.v[vx as usize] += val; 
             },
-            _ => {panic!("Given a bad opcode of value {}", opcode)}
+            _ => {panic!("Given a bad opcode of value {} expected some variant of 0x7... or ox6...", opcode)}
         }
     }
 
+    /// Mutates Vx according to VY and the opcode
+    /// 
+    /// 1. ```opcode => 0x8xy0``` Sets Vx ```=``` Vy
+    /// 2. ```opcode => 0x8xy1``` ```OR```'s Vx and Vy 
+    /// 3. ```opcode => 0x8xy2``` ```AND```'s Vx and Vy 
+    /// 4. ```opcode => 0x8xy3``` ```XOR```'s Vx and Vy 
+    /// 5. ```opcode => 0x8xy4``` ```Adds```'s Vx and Vy and sets VF to 1 if the addition overflows
+    /// 6. ```opcode => 0x8xy5``` Sets VF to 1 if Vx > Vy and ```Subs```'s Vx and Vy.
+    /// 7. ```opcode => 0x8xy6``` saves the least significant bit in Vx in VF and Right shifts Vx by 1
+    /// 8. ```opcode => 0x8xy7``` ```Subs```'s Vx and Vy and sets VF to 1 if the subtraction overflows
+    /// 9. ```opcode => 0x8xyE``` saves the most significant bit in Vx in VF and left shifts Vx by 1
     fn set_vx_vy(&mut self, opcode : u16) { 
-        let vx = ((opcode & 0x0F00) >> 8) as u8; 
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        let vy = ((opcode & 0x00F0) >> 4) as usize; 
+
+        let instruction = (opcode & 0x000F) as u8;
+
+        match instruction { 
+            0 => {self.v[vx] = self.v[vy]}, 
+            1 => {self.v[vx] |= self.v[vy] },
+            2 => {self.v[vx] &= self.v[vy]},
+            3 => {self.v[vx] ^= self.v[vy]},
+            4 => {
+                let (sum, of)  = self.v[vx].overflowing_add(self.v[vy]) ;
+                self.v[0xF] =  of as u8; 
+                self.v[vx] = sum; 
+            }
+            5 => {
+                let (sum, of)  = self.v[vx].overflowing_sub(self.v[vy]);
+                self.v[0xF] = (!of) as u8; // set flag if vx > vy or no overflow occurs
+                self.v[vx]= sum;  
+            }
+            6 => {
+                self.v[0xF] = self.v[vx] & 0x1; 
+                self.v[vx] >>= 1; 
+            }
+            7 => {
+                let (sum, of)  = self.v[vx].overflowing_sub(self.v[vy]);
+                self.v[0xF] = of as u8;
+                self.v[vx]= sum;  
+            }
+            0xE => {
+                self.v[0xF] = (self.v[vx] & 0x80 ) >> 7 ;
+                self.v[vx] <<= 1; 
+            }
+            _ => {panic!("Given a bad opcode of value {}. Expected some variant of 0x8...", opcode)}
+        }
         
     }
 
+    /// Skips next instruction based on ```Vx != Vy```
+    /// 
+    /// 1. ```opcodes => 0x9xy0``` Skips if Vx ```!=``` Vy
+    fn skip_vx_vy_ne(&mut self, opcode : u16) { 
+        let vx = ((opcode & 0x0F00) >> 8) as u8;
+        let vy = ((opcode & 0x00F0) >> 8) as u8; 
 
+        if self.v[vx as usize] != self.v[vy as usize] { 
+            self.increment_pc();
+        }
+    }
+
+    /// Set I = nnn.
+    /// 
+    /// ```opcode => 0xAnnn```
+    fn set_i(&mut self, opcode : u16) { 
+        self.index = opcode & 0x0FFF;
+    }
 }
 
 
