@@ -325,11 +325,22 @@ impl Chip8CPU {
         self.index = opcode & 0x0FFF;
     }
 
-    /// Set I = nnn.
+    /// Jump to location V0 + addr 
     /// 
-    /// ```opcode => 0xAnnn```
+    /// ```opcode => 0xBnnn``` jumps to ```v[0] + 0xnnn```
     fn jmp_v0_addr(&mut self, opcode : u16) { 
+        let address = opcode & 0x0FFF; 
+        self.pc = self.v[0] as u16 + address; 
+    }
 
+    /// Sets Vx to a random byte and input byte 
+    /// 
+    /// ```opcode => 0xCxkk``` sets v[x] = random byte & 0xkk
+    fn rnd_vx_byte(&mut self, opcode : u16) { 
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        let val = (opcode & 0x00FF) as u8;
+
+        self.v[vx] = self.random_byte() & val ;
     }
 }
 
