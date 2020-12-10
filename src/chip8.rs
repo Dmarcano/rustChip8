@@ -8,6 +8,7 @@ const START_ADDR : usize = 0x200;
 
 const FONTSET_SIZE : usize  = 80; 
 
+
 const FONTSET : [u8; FONTSET_SIZE]  = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -320,6 +321,13 @@ impl Chip8CPU {
     /// ```opcode => 0xAnnn```
     fn set_i(&mut self, opcode : u16) { 
         self.index = opcode & 0x0FFF;
+    }
+
+    /// Set I = nnn.
+    /// 
+    /// ```opcode => 0xAnnn```
+    fn jmp_v0_addr(&mut self, opcode : u16) { 
+
     }
 }
 
