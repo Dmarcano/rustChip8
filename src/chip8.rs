@@ -515,6 +515,50 @@ mod tests{
 
     }
 
+
+    /// Testing of the Chip-8 CPU's ability to perform shifting instructions 
+    #[test]
+    fn register_shifting_test() { 
+        let mut cpu = Chip8CPU::new(); 
+        set_registers(&mut cpu,  &[(1, 0xFF)]);
+
+        // shift right with vf expected to be 1
+        let mut opcode = 0x8126;
+        let expected_vf = 1; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0xFF >> 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+        // shift right with vf expected to be 0
+        set_registers(&mut cpu,  &[(1, 0xF0)]);
+        opcode = 0x8126;
+        let expected_vf = 0; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0xF0 >> 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+
+        // shift left with vf expected to be 1
+        set_registers(&mut cpu,  &[(1, 0xFF)]);
+        opcode = 0x812E;
+        let expected_vf = 1; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0xFF << 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+        // shift left with vf expected to be 0
+        set_registers(&mut cpu,  &[(1, 0x0F)]);
+        opcode = 0x812E;
+        let expected_vf = 0; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0x0F << 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+
+    }
+
+    /// Testing of the Chip-8 CPU's ability to perform jump instructions based on the state of two registers
+    #[test]
+    fn register_jump_test() {
+        
+    }
+
     // uses array of (register idx, register val) to set register easily
     fn set_registers( cpu : &mut Chip8CPU, register_vals : &[(u8, u8)]) { 
 
