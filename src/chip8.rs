@@ -225,7 +225,9 @@ impl Chip8CPU {
     /// 1. ```opcodes => 0x5xy0``` Skips if Vx == Vy
     fn skip_vx_vy_eq(&mut self, opcode : u16) { 
         let vx = ((opcode & 0x0F00) >> 8) as u8;
-        let vy = ((opcode & 0x00F0) >> 8) as u8; 
+        let vy = ((opcode & 0x00F0) >> 4) as u8; 
+
+        println!("vx: {}, vy {}", vx, vy);
 
         if self.v[vx as usize] == self.v[vy as usize] { 
             self.increment_pc();
@@ -309,7 +311,7 @@ impl Chip8CPU {
     /// 1. ```opcodes => 0x9xy0``` Skips if Vx ```!=``` Vy
     fn skip_vx_vy_ne(&mut self, opcode : u16) { 
         let vx = ((opcode & 0x0F00) >> 8) as u8;
-        let vy = ((opcode & 0x00F0) >> 8) as u8; 
+        let vy = ((opcode & 0x00F0) >> 4) as u8; 
 
         if self.v[vx as usize] != self.v[vy as usize] { 
             self.increment_pc();
@@ -556,7 +558,39 @@ mod tests{
     /// Testing of the Chip-8 CPU's ability to perform jump instructions based on the state of two registers
     #[test]
     fn register_jump_test() {
+        let mut cpu = Chip8CPU::new(); 
+        let x_val = 0x56; 
+        let y_val = 0x33;
+
+        // Jump if v[1] == v[2]
+        set_registers(&mut cpu,  &[(1, x_val), (2, y_val)]);
+        let opcode = 0x5120; // jump 
+        cpu.skip_vx_vy_eq(opcode); 
+        assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
+
+        println!("pc before {}" , cpu.pc); 
+        set_registers(&mut cpu,  &[(1, x_val), (2, x_val)]);
+        let opcode = 0x5120; // jump 
+        cpu.skip_vx_vy_eq(opcode); 
+        println!("pc after {}", cpu.pc); 
+
+
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
+
+        cpu.reset(); 
+
+        // Jump if v[1] == v[2]
+        set_registers(&mut cpu,  &[(1, x_val), (2, x_val)]);
+        let opcode = 0x9120; // jump 
+        cpu.skip_vx_vy_ne(opcode); 
+        assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
+
+        set_registers(&mut cpu,  &[(1, x_val), (2, y_val)]);
+        let opcode = 0x9120; // jump 
+        cpu.skip_vx_vy_ne(opcode); 
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
         
+
     }
 
     // uses array of (register idx, register val) to set register easily
