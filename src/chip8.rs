@@ -174,8 +174,8 @@ impl Chip8CPU {
     /// for ```opcode => 00EE```
     fn ret(&mut self) { 
         // return from a subroutine
-        self.pc = self.stack[self.sp as usize]; 
         self.sp -= 1;
+        self.pc = self.stack[self.sp as usize]; 
     }
 
     /// jumps to a specified address in the opcode
@@ -393,7 +393,18 @@ mod tests{
     #[test]
     fn jumping_tests() {
 
-        // unimplemented!();
+        let mut cpu = Chip8CPU::new(); 
+        let mut opcode = 0x1FAF; // opcode calls JMP to address 0xFAF
+        cpu.jmp_addr(opcode);   
+        assert_eq!(cpu.pc, 0xFAF); 
+
+        opcode = 0x2250; // opcode calls CALL to address 0x250
+        cpu.call_addr(opcode); 
+        assert_eq!(cpu.pc, 0x250); 
+
+        cpu.ret(); 
+        assert_eq!(cpu.pc, 0xFAF); // return to previous address at 0xFAF
+
     }
 
     /// Testing of the Chip-8 CPU's ability to jump addresses based on value of register
