@@ -8,7 +8,6 @@ const START_ADDR : usize = 0x200;
 
 const FONTSET_SIZE : usize  = 80; 
 
-
 const FONTSET : [u8; FONTSET_SIZE]  = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -27,6 +26,10 @@ const FONTSET : [u8; FONTSET_SIZE]  = [
 	0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 ];
+
+const VIDEO_WIDTH : u8 = 64; 
+const VIDEO_HEIGHT : u8 = 32; 
+const SPRITE_WIDTH : u8 = 8; 
 
 /// Chip-8 CPU capable of reading and processing instructions
 /// more information on chip-8 can be found at http://devernay.free.fr/hacks/chip8/C8TECH10.HTM 
@@ -57,7 +60,7 @@ pub struct Chip8CPU {
     rng : rand::prelude::ThreadRng,
 
     /// the display buffer that is used to draw graphics
-    disp_buf : [u8 ; 64*32], 
+    disp_buf : [u8 ; (VIDEO_WIDTH as usize) *(VIDEO_HEIGHT as usize)], 
 
     keyboard : [u8; 16]
 }
@@ -175,8 +178,11 @@ impl Chip8CPU {
 // Op-Code implementations
 impl Chip8CPU { 
 
+    /// Returns from subroutine using the stack to return to before the call was made
+    /// 
+    /// for ```opcode => 00E0 ```
     fn clear_display(&mut self) { 
-        // TODO Clear Display Buffer
+        self.disp_buf.iter_mut().for_each(|m| *m = 0);
     }
 
     /// Returns from subroutine using the stack to return to before the call was made
@@ -354,6 +360,44 @@ impl Chip8CPU {
 
         self.v[vx] = self.random_byte() & val ;
     }
+
+    /// Display n-byte spryte starting in the index (vx, vy) and draws N bytes. sets VF to 0
+    /// 
+    /// ```opcode => 0xDxyn```
+    fn drw_vx_vy_n(&mut self, opcode: u16) { 
+
+        let vx = ((opcode & 0x0F00) >> 8) as usize;  
+        let vy = ((opcode & 0x00F0) >> 4) as usize;  
+        let sprite_len = (opcode & 0x000F)  as usize;  
+
+        let x_pos = self.v[vx]  % VIDEO_WIDTH; 
+        let y_pos = self.v[vy]  % VIDEO_WIDTH; 
+
+        // set collision register to 0 "no-collition"
+        self.v[0xF] = 0; 
+
+        for row in 0..sprite_len { 
+            let sprite_byte = self.memory[self.index as usize  + row]; 
+
+            for col in 0..8 { 
+                let sprite_pixel = sprite_byte & (0x080 >> col); 
+                let screen_idx = ((y_pos as usize + row) * (VIDEO_WIDTH as usize ) + (x_pos as usize + col)) as usize;
+                let mut screen_pixel  = self.disp_buf[screen_idx]; 
+
+                if sprite_pixel != 0x00 { 
+                    if screen_pixel != 0x0000 { 
+                        // collision occurs 
+                        self.v[0xF] = 1;    
+                    }
+
+                    // XOR the screenPixel with the current spryte pixel
+                    screen_pixel ^= 0xFF; 
+                    self.disp_buf[screen_idx] = screen_pixel; 
+                }
+            }
+        }
+    }
+
 }
 
 
