@@ -402,49 +402,71 @@ impl Chip8CPU {
     /// 
     /// ```opcode => 0xEx9E```
     fn skip_vx_keypad(&mut self, opcode : u16) { 
-        unimplemented!()
+        
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        let key = self.v[vx] as usize; 
+
+        if self.keyboard[key] != 0 { 
+            self.increment_pc(); 
+        }
     }
 
     /// Skip the next instruction if key with the value of Vx is not pressed. 
     /// 
     /// ```opcode => 0xExA1```
     fn not_skip_vx_keypad(&mut self, opcode : u16) { 
-        unimplemented!()
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        let key = self.v[vx] as usize; 
+
+        if self.keyboard[key] == 0 { 
+            self.increment_pc(); 
+        }
     }
 
     /// set Vx = delay timer val 
     /// 
-    /// ```opcode -xFx07```
+    /// ```opcode => xFx07```
     fn set_vx_delay_timer(&mut self, opcode : u16)  { 
-        unimplemented!()
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        self.v[vx] = self.delay_timer; 
     }
 
     /// Wait for a key press, store the value of the key in Vx. 
     /// 
     /// ```opcode => 0xFx0A```
     fn load_keypress_vx(&mut self, opcode : u16) { 
-        unimplemented!()
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        for i in 0..self.keyboard.len() { 
+            if self.keyboard[i] != 0 { 
+                self.v[vx] = i  as u8; 
+                return;
+            }
+        }
+        self.decrement_pc(); // if a key is not pressed decrement the pc to rerun the instruction.
     }
 
     /// Set the delay timer equal to Vx 
     /// 
     /// ```opcode => 0xFx15```
     fn set_delay_timer_vx( &mut self, opcode : u16) { 
-        unimplemented!()
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        self.delay_timer = self.v[vx];
     }
 
     /// Set the sound timer equal to Vx 
     /// 
     /// ```opcode => 0xFx18```
     fn set_snd_timer_vx(&mut self, opcode : u16) { 
-        unimplemented!()
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        self.sound_timer = self.v[vx]; 
     }
 
     /// add vx to the index register. I = I + Vx
     /// 
     /// ```opcode => 0xFx1E```
     fn add_idx_vx(&mut self, opcode : u16) { 
-
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        self.index += self.v[vx] as u16; 
     }
 
     /// Sets the index register to the location of the start address of the Vx-th digit 
@@ -453,20 +475,41 @@ impl Chip8CPU {
     /// 
     /// ```opcode -> 0xFx29```
     fn set_idx_font_sprite_vx(&mut self, opcode : u16) {
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        let digit = self.v[vx]; 
 
+        self.index = (START_ADDR as u16)  + ((5 * digit) as u16);
     }
 
     /// Store the BCD representation of Vx into the addresses I, I+1, I + 2 
     /// 
     /// ```opcode => 0xFx33```
     fn set_idx_bcd_vx(&mut self, opcode : u16) { 
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        let mut val = self.v[vx]; 
 
+        // Ones-Place 
+        self.memory[self.index as usize + 2] = val % 10;
+        val /= 10; 
+
+
+        // Tens-place
+        self.memory[self.index as usize + 1] = val % 10;
+        val /= 10; 
+
+        // Hundres Place 
+        self.memory[self.index as usize] = val % 10;
     }
 
     /// Load registers V0 through Vx in memory starting at memory address I up to I + X   
     /// 
     /// ```opcode => 0xFx55```
     fn write_x_registers(&mut self, opcode : u16) { 
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+
+        for i in 0..vx { 
+            self.memory[self.index as usize + i] = self.v[i]; 
+        }
 
     }
 
@@ -474,9 +517,11 @@ impl Chip8CPU {
     /// 
     /// ```opcode => 0xFx65```
     fn read_x_registers(&mut self, opcode : u16) { 
-
+        let vx = ((opcode & 0x0F00) >> 8) as usize; 
+        for i in 0..vx { 
+            self.v[i] = self.memory[self.index as usize + i]; 
+        }
     }
-
 
 }
 
