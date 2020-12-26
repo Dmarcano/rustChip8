@@ -202,10 +202,28 @@ impl Chip8CPU {
         self.v[0xF] = 0; 
 
         for row in 0..sprite_len { 
+            //grab a row of the spryte we are going to draw
             let sprite_byte = self.memory[self.index as usize  + row]; 
 
             for col in 0..SPRITE_WIDTH as usize{ 
+                /* 
+                    A sprite pixel is the byte read from memory read as binary values 1 or 0. 
+                    Here one takes the spryte byte which is some collection of 0bXXXX|XXXX byte where each X is a bit 
+                    ( the | is a divisor between 4 bits or a "nibble" of a byte)
+
+                    One then ANDS it with the byte 0b1000|0000 shifted by the number of cols.
+
+                    For Example take sprite 0xF6  which in binary is 0b1111|0110 
+                    
+                    In the first iteration of the loop 0b1111|0110  is AND-ed with 0b1000|0000 this results in the value 0b1000|0000
+                    In the next iteration one shifts the bit down by 1. So one ANDs  0b1111|0110  with 0b0100|0000 resulting in 0b1000|0000
+                    
+                    In the 5th iteration one ANDs 0b1111|0110 with 0b0000|1000 which results in 0b0000|0000
+
+                    Any time any non-zero byte is found then the display buffer at location I + row is set to ON
+                */
                 let sprite_pixel = sprite_byte & (0x080 >> col); 
+
                 let screen_idx = ((y_pos as usize + row) * (VIDEO_WIDTH as usize ) + (x_pos as usize + col)) as usize;
                 let mut screen_pixel  = self.disp_buf[screen_idx]; 
 
