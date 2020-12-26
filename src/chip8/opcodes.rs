@@ -1,5 +1,4 @@
 use super::{Chip8CPU, VIDEO_HEIGHT, VIDEO_WIDTH, START_ADDR, SPRITE_WIDTH}; 
-// use super::VIDEO_HEIGHT; 
 
 // Op-Code implementations
 impl Chip8CPU { 
