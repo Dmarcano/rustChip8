@@ -1,4 +1,4 @@
-use super::{Chip8CPU, VIDEO_HEIGHT, VIDEO_WIDTH, START_ADDR}; 
+use super::{Chip8CPU, VIDEO_HEIGHT, VIDEO_WIDTH, START_ADDR, SPRITE_WIDTH}; 
 // use super::VIDEO_HEIGHT; 
 
 // Op-Code implementations
@@ -197,7 +197,7 @@ impl Chip8CPU {
         let sprite_len = (opcode & 0x000F)  as usize;  
 
         let x_pos = self.v[vx]  % VIDEO_WIDTH; 
-        let y_pos = self.v[vy]  % VIDEO_WIDTH; 
+        let y_pos = self.v[vy]  % VIDEO_HEIGHT; 
 
         // set collision register to 0 "no-collition"
         self.v[0xF] = 0; 
@@ -205,7 +205,7 @@ impl Chip8CPU {
         for row in 0..sprite_len { 
             let sprite_byte = self.memory[self.index as usize  + row]; 
 
-            for col in 0..8 { 
+            for col in 0..SPRITE_WIDTH as usize{ 
                 let sprite_pixel = sprite_byte & (0x080 >> col); 
                 let screen_idx = ((y_pos as usize + row) * (VIDEO_WIDTH as usize ) + (x_pos as usize + col)) as usize;
                 let mut screen_pixel  = self.disp_buf[screen_idx]; 

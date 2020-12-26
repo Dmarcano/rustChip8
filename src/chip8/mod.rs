@@ -77,7 +77,7 @@ impl  Chip8CPU{
         let v : [u8; 16]= [0; 16];
         let mut memory : [u8; 4096] = [0; 4096]; 
         let stack = [0; 16];
-        let disp_buf = [0; 32*64];
+        let disp_buf = [0; VIDEO_WIDTH as usize * VIDEO_HEIGHT as usize];
         let keyboard = [0; 16];
 
 
