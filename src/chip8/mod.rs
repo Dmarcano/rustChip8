@@ -178,8 +178,6 @@ impl Chip8CPU {
 
 }
 
-
-
 pub trait Keypad { 
 
 }

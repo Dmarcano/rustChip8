@@ -354,253 +354,258 @@ impl Chip8CPU {
 #[cfg(test)]
 mod tests { 
 
-use super::*;
+    use super::*;
 
-/// tests for simple setting and mutation of registers
-#[test]
-fn register_set_tests() {
+    /// tests for simple setting and mutation of registers
+    #[test]
+    fn register_set_tests() {
 
-    let mut cpu = Chip8CPU::new(); 
+        let mut cpu = Chip8CPU::new(); 
 
-    let mut opcode = 0x6123; // sets register v[1] to 0x23
-    cpu.set_vx(opcode);
+        let mut opcode = 0x6123; // sets register v[1] to 0x23
+        cpu.set_vx(opcode);
 
-    opcode = 0x7101; // sets v[1] += 1
-    assert_eq!(cpu.v[1], 0x23); 
-    
-    cpu.set_vx(opcode); 
-    assert_eq!(cpu.v[1], 0x24); 
-}
-
-/// Testing of the Chip-8 CPU's ability to properly handle jump direct jump, call, and ret commands
-#[test]
-fn jumping_tests() {
-
-    let mut cpu = Chip8CPU::new(); 
-    let mut opcode = 0x1FAF; // opcode calls JMP to address 0xFAF
-    cpu.jmp_addr(opcode);   
-    assert_eq!(cpu.pc, 0xFAF); 
-
-    opcode = 0x2250; // opcode calls CALL to address 0x250
-    cpu.call_addr(opcode); 
-    assert_eq!(cpu.pc, 0x250); 
-
-    cpu.ret(); 
-    assert_eq!(cpu.pc, 0xFAF); // return to previous address at 0xFAF
-
-    cpu.reset(); 
-    let v0_val = 0x020; 
-    set_registers(&mut cpu, &[(0, v0_val)]); 
-    opcode = 0xB111; // jump to V0 + 0x111 
-    cpu.jmp_v0_addr(opcode); 
-    assert_eq!(cpu.pc, v0_val as u16+ 0x111); 
-}
-
-/// Testing of the Chip-8 CPU's ability skip instructions based on values in registers
-#[test]
-fn skip_byte_tests() { 
-
-    let mut cpu = Chip8CPU::new(); 
-    let mut opcode = 0x6123; // set register v[1] to 0x23 
-    cpu.set_vx(opcode); 
-
-
-    opcode = 0x3123; // compare v[1] to 0x23 and Skip next instruction if they are equal
-    cpu.skip_vx(opcode); 
-    assert_eq!(cpu.pc, (START_ADDR + 2) as u16); 
-
-    opcode = 0x4123; // compare v[1] to 0x23 and Skip next instruction if they are NOT equal
-    cpu.skip_vx(opcode);
-    assert_eq!(cpu.pc, (START_ADDR + 2) as u16); 
-
-    opcode = 0x4124; // compare v[1] to 0x24 and Skip next instruction if they are NOT equal
-    cpu.skip_vx(opcode);
-    assert_eq!(cpu.pc, (START_ADDR + 4) as u16); 
-
-    opcode = 0x3124; // compare v[1] to 0x24 and Skip next instruction if they are equal
-    cpu.skip_vx(opcode);
-    assert_eq!(cpu.pc, (START_ADDR + 4) as u16); 
-}
-
-/// Testing of the Chip-8 CPU's ability to perform logical instructions based on the state of two registers
-#[test]
-fn register_logical_ops_test() {
-    let mut cpu = Chip8CPU::new(); 
-    let x_val = 0x56; 
-    let y_val = 0x33;
-    set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
-
-    // SET TEST
-    let mut opcode = 0x8120; // set vx equal to vy 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], cpu.v[2]);
-    // OR TEST
-    set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
-    opcode = 0x8121; // set vx to vx | vy 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], x_val | y_val);
-    // AND TEST 
-    set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
-    opcode = 0x8122; // set vx to vx & vy 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], x_val & y_val);
-        // XOR TEST 
-    set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
-    opcode = 0x8123; // set vx to vx ^ vy 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], x_val ^ y_val);
-}
-
-/// Testing of the Chip-8 CPU's ability to perform arithmetic instructions based on the state of two registers
-#[test]
-fn register_arithmetic_test() {
-    let mut cpu = Chip8CPU::new(); 
-    let x_val = 0x56; 
-    let y_val = 0x33;
-
-    // Add registers no overflow
-    set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
-    let mut opcode = 0x8124; // add v[1] and v[2] 
-    cpu.set_vx_vy(opcode);
-    let expected = x_val + y_val; 
-    assert_eq!(cpu.v[1], expected); 
-    assert_eq!(cpu.v[0xF], 0); 
-    // Add registers with overflow
-    set_registers(&mut cpu, &[(1, x_val), (2,0xFA)]);
-    opcode = 0x8124; // add v[1] and v[2] 
-    cpu.set_vx_vy(opcode);
-    let (expected,_) = x_val.overflowing_add(0xFA);
-    assert_eq!(cpu.v[1], expected); 
-    assert_eq!(cpu.v[0xF], 1); 
-
-    // Subtract registers no overflow with VF expected to be set to 1 since X > Y
-    set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
-    opcode = 0x8125; // subtract borrow
-    cpu.set_vx_vy(opcode); 
-    let expected = x_val - y_val;
-    assert_eq!(cpu.v[1], expected);  
-    assert_eq!(cpu.v[0xF], 1); 
-    // Subtract registers with overflow with VF expected to be set to 0 since X <> Y
-    set_registers(&mut cpu, &[(1, 0x01), (2,y_val)]);
-    opcode = 0x8125;
-    cpu.set_vx_vy(opcode); 
-    let (expected, _)= u8::overflowing_sub(0x01, y_val) ;// 0x01.overflowing_sub(y_val);
-    assert_eq!(cpu.v[1], expected);  
-    assert_eq!(cpu.v[0xF], 0); 
-
-    // Subtract registers no overflow with VF expected to be set to 0 since X < Y
-    set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
-    opcode = 0x8127; // subtract no borrow
-    cpu.set_vx_vy(opcode); 
-    let expected = x_val - y_val;
-    assert_eq!(cpu.v[1], expected);  
-    assert_eq!(cpu.v[0xF], 0); 
-    // Subtract registers with overflow with VF expected to be set to 0 since X > Y
-    set_registers(&mut cpu, &[(1, 0x01), (2,y_val)]);
-    opcode = 0x8127;
-    cpu.set_vx_vy(opcode); 
-    let (expected, _)= u8::overflowing_sub(0x01, y_val) ;// 0x01.overflowing_sub(y_val);
-    assert_eq!(cpu.v[1], expected);  
-    assert_eq!(cpu.v[0xF], 1); 
-
-}
-
-
-/// Testing of the Chip-8 CPU's ability to perform shifting instructions 
-#[test]
-fn register_shifting_test() { 
-    let mut cpu = Chip8CPU::new(); 
-    set_registers(&mut cpu,  &[(1, 0xFF)]);
-
-    // shift right with vf expected to be 1
-    let mut opcode = 0x8126;
-    let expected_vf = 1; 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], 0xFF >> 1); 
-    assert_eq!(cpu.v[0xF], expected_vf); 
-    // shift right with vf expected to be 0
-    set_registers(&mut cpu,  &[(1, 0xF0)]);
-    opcode = 0x8126;
-    let expected_vf = 0; 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], 0xF0 >> 1); 
-    assert_eq!(cpu.v[0xF], expected_vf); 
-
-    // shift left with vf expected to be 1
-    set_registers(&mut cpu,  &[(1, 0xFF)]);
-    opcode = 0x812E;
-    let expected_vf = 1; 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], 0xFF << 1); 
-    assert_eq!(cpu.v[0xF], expected_vf); 
-    // shift left with vf expected to be 0
-    set_registers(&mut cpu,  &[(1, 0x0F)]);
-    opcode = 0x812E;
-    let expected_vf = 0; 
-    cpu.set_vx_vy(opcode); 
-    assert_eq!(cpu.v[1], 0x0F << 1); 
-    assert_eq!(cpu.v[0xF], expected_vf); 
-
-}
-
-/// Testing of the Chip-8 CPU's ability to perform jump instructions based on the state of two registers
-#[test]
-fn register_jump_test() {
-    let mut cpu = Chip8CPU::new(); 
-    let x_val = 0x56; 
-    let y_val = 0x33;
-
-    // Jump if v[1] == v[2]
-    set_registers(&mut cpu,  &[(1, x_val), (2, y_val)]);
-    let opcode = 0x5120; // jump 
-    cpu.skip_vx_vy_eq(opcode); 
-    assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
-
-    println!("pc before {}" , cpu.pc); 
-    set_registers(&mut cpu,  &[(1, x_val), (2, x_val)]);
-    let opcode = 0x5120; // jump 
-    cpu.skip_vx_vy_eq(opcode); 
-    println!("pc after {}", cpu.pc); 
-
-
-    assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
-
-    cpu.reset(); 
-
-    // Jump if v[1] == v[2]
-    set_registers(&mut cpu,  &[(1, x_val), (2, x_val)]);
-    let opcode = 0x9120; // jump 
-    cpu.skip_vx_vy_ne(opcode); 
-    assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
-
-    set_registers(&mut cpu,  &[(1, x_val), (2, y_val)]);
-    let opcode = 0x9120; // jump 
-    cpu.skip_vx_vy_ne(opcode); 
-    assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
-    
-
-}
-
-#[test]
-fn index_register_test() {
-    let mut cpu = Chip8CPU::new(); 
-    let opcode = 0xA123; 
-    cpu.set_i(opcode); 
-    assert_eq!(cpu.index, 0x123) 
-
-}
-
-#[test]
-fn display_test() {
-    unimplemented!();
-}
-
-// uses array of (register idx, register val) to set register easily
-fn set_registers( cpu : &mut Chip8CPU, register_vals : &[(u8, u8)]) { 
-
-    for (register, val) in register_vals { 
-        let opcode =( 0x6000 | (*register as u16)<< 8 )| (*val as u16); 
+        opcode = 0x7101; // sets v[1] += 1
+        assert_eq!(cpu.v[1], 0x23); 
+        
         cpu.set_vx(opcode); 
+        assert_eq!(cpu.v[1], 0x24); 
     }
-}
+
+    /// Testing of the Chip-8 CPU's ability to properly handle jump direct jump, call, and ret commands
+    #[test]
+    fn jumping_tests() {
+
+        let mut cpu = Chip8CPU::new(); 
+        let mut opcode = 0x1FAF; // opcode calls JMP to address 0xFAF
+        cpu.jmp_addr(opcode);   
+        assert_eq!(cpu.pc, 0xFAF); 
+
+        opcode = 0x2250; // opcode calls CALL to address 0x250
+        cpu.call_addr(opcode); 
+        assert_eq!(cpu.pc, 0x250); 
+
+        cpu.ret(); 
+        assert_eq!(cpu.pc, 0xFAF); // return to previous address at 0xFAF
+
+        cpu.reset(); 
+        let v0_val = 0x020; 
+        set_registers(&mut cpu, &[(0, v0_val)]); 
+        opcode = 0xB111; // jump to V0 + 0x111 
+        cpu.jmp_v0_addr(opcode); 
+        assert_eq!(cpu.pc, v0_val as u16+ 0x111); 
+    }
+
+    /// Testing of the Chip-8 CPU's ability skip instructions based on values in registers
+    #[test]
+    fn skip_byte_tests() { 
+
+        let mut cpu = Chip8CPU::new(); 
+        let mut opcode = 0x6123; // set register v[1] to 0x23 
+        cpu.set_vx(opcode); 
+
+
+        opcode = 0x3123; // compare v[1] to 0x23 and Skip next instruction if they are equal
+        cpu.skip_vx(opcode); 
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); 
+
+        opcode = 0x4123; // compare v[1] to 0x23 and Skip next instruction if they are NOT equal
+        cpu.skip_vx(opcode);
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); 
+
+        opcode = 0x4124; // compare v[1] to 0x24 and Skip next instruction if they are NOT equal
+        cpu.skip_vx(opcode);
+        assert_eq!(cpu.pc, (START_ADDR + 4) as u16); 
+
+        opcode = 0x3124; // compare v[1] to 0x24 and Skip next instruction if they are equal
+        cpu.skip_vx(opcode);
+        assert_eq!(cpu.pc, (START_ADDR + 4) as u16); 
+    }
+
+    /// Testing of the Chip-8 CPU's ability to perform logical instructions based on the state of two registers
+    #[test]
+    fn register_logical_ops_test() {
+        let mut cpu = Chip8CPU::new(); 
+        let x_val = 0x56; 
+        let y_val = 0x33;
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+
+        // SET TEST
+        let mut opcode = 0x8120; // set vx equal to vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], cpu.v[2]);
+        // OR TEST
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8121; // set vx to vx | vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], x_val | y_val);
+        // AND TEST 
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8122; // set vx to vx & vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], x_val & y_val);
+            // XOR TEST 
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8123; // set vx to vx ^ vy 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], x_val ^ y_val);
+    }
+
+    /// Testing of the Chip-8 CPU's ability to perform arithmetic instructions based on the state of two registers
+    #[test]
+    fn register_arithmetic_test() {
+        let mut cpu = Chip8CPU::new(); 
+        let x_val = 0x56; 
+        let y_val = 0x33;
+
+        // Add registers no overflow
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        let mut opcode = 0x8124; // add v[1] and v[2] 
+        cpu.set_vx_vy(opcode);
+        let expected = x_val + y_val; 
+        assert_eq!(cpu.v[1], expected); 
+        assert_eq!(cpu.v[0xF], 0); 
+        // Add registers with overflow
+        set_registers(&mut cpu, &[(1, x_val), (2,0xFA)]);
+        opcode = 0x8124; // add v[1] and v[2] 
+        cpu.set_vx_vy(opcode);
+        let (expected,_) = x_val.overflowing_add(0xFA);
+        assert_eq!(cpu.v[1], expected); 
+        assert_eq!(cpu.v[0xF], 1); 
+
+        // Subtract registers no overflow with VF expected to be set to 1 since X > Y
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8125; // subtract borrow
+        cpu.set_vx_vy(opcode); 
+        let expected = x_val - y_val;
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 1); 
+        // Subtract registers with overflow with VF expected to be set to 0 since X <> Y
+        set_registers(&mut cpu, &[(1, 0x01), (2,y_val)]);
+        opcode = 0x8125;
+        cpu.set_vx_vy(opcode); 
+        let (expected, _)= u8::overflowing_sub(0x01, y_val) ;// 0x01.overflowing_sub(y_val);
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 0); 
+
+        // Subtract registers no overflow with VF expected to be set to 0 since X < Y
+        set_registers(&mut cpu, &[(1, x_val), (2,y_val)]);
+        opcode = 0x8127; // subtract no borrow
+        cpu.set_vx_vy(opcode); 
+        let expected = x_val - y_val;
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 0); 
+        // Subtract registers with overflow with VF expected to be set to 0 since X > Y
+        set_registers(&mut cpu, &[(1, 0x01), (2,y_val)]);
+        opcode = 0x8127;
+        cpu.set_vx_vy(opcode); 
+        let (expected, _)= u8::overflowing_sub(0x01, y_val) ;// 0x01.overflowing_sub(y_val);
+        assert_eq!(cpu.v[1], expected);  
+        assert_eq!(cpu.v[0xF], 1); 
+
+    }
+
+
+    /// Testing of the Chip-8 CPU's ability to perform shifting instructions 
+    #[test]
+    fn register_shifting_test() { 
+        let mut cpu = Chip8CPU::new(); 
+        set_registers(&mut cpu,  &[(1, 0xFF)]);
+
+        // shift right with vf expected to be 1
+        let mut opcode = 0x8126;
+        let expected_vf = 1; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0xFF >> 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+        // shift right with vf expected to be 0
+        set_registers(&mut cpu,  &[(1, 0xF0)]);
+        opcode = 0x8126;
+        let expected_vf = 0; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0xF0 >> 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+
+        // shift left with vf expected to be 1
+        set_registers(&mut cpu,  &[(1, 0xFF)]);
+        opcode = 0x812E;
+        let expected_vf = 1; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0xFF << 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+        // shift left with vf expected to be 0
+        set_registers(&mut cpu,  &[(1, 0x0F)]);
+        opcode = 0x812E;
+        let expected_vf = 0; 
+        cpu.set_vx_vy(opcode); 
+        assert_eq!(cpu.v[1], 0x0F << 1); 
+        assert_eq!(cpu.v[0xF], expected_vf); 
+
+    }
+
+    /// Testing of the Chip-8 CPU's ability to perform jump instructions based on the state of two registers
+    #[test]
+    fn register_jump_test() {
+        let mut cpu = Chip8CPU::new(); 
+        let x_val = 0x56; 
+        let y_val = 0x33;
+
+        // Jump if v[1] == v[2]
+        set_registers(&mut cpu,  &[(1, x_val), (2, y_val)]);
+        let opcode = 0x5120; // jump 
+        cpu.skip_vx_vy_eq(opcode); 
+        assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
+
+        println!("pc before {}" , cpu.pc); 
+        set_registers(&mut cpu,  &[(1, x_val), (2, x_val)]);
+        let opcode = 0x5120; // jump 
+        cpu.skip_vx_vy_eq(opcode); 
+        println!("pc after {}", cpu.pc); 
+
+
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
+
+        cpu.reset(); 
+
+        // Jump if v[1] == v[2]
+        set_registers(&mut cpu,  &[(1, x_val), (2, x_val)]);
+        let opcode = 0x9120; // jump 
+        cpu.skip_vx_vy_ne(opcode); 
+        assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
+
+        set_registers(&mut cpu,  &[(1, x_val), (2, y_val)]);
+        let opcode = 0x9120; // jump 
+        cpu.skip_vx_vy_ne(opcode); 
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
+        
+
+    }
+
+    #[test]
+    fn index_register_test() {
+        let mut cpu = Chip8CPU::new(); 
+        let opcode = 0xA123; 
+        cpu.set_i(opcode); 
+        assert_eq!(cpu.index, 0x123) 
+
+    }
+
+
+    #[test]
+    fn display_test() {
+
+        // sprites are 8-cols wide. and rely on the register values for starting x and y positions. 
+        let mut cpu = Chip8CPU::new(); 
+
+        unimplemented!();
+    }
+
+    // uses array of (register idx, register val) to set register easily
+    fn set_registers( cpu : &mut Chip8CPU, register_vals : &[(u8, u8)]) { 
+
+        for (register, val) in register_vals { 
+            let opcode =( 0x6000 | (*register as u16)<< 8 )| (*val as u16); 
+            cpu.set_vx(opcode); 
+        }
+    }
 }
