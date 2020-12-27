@@ -1,5 +1,7 @@
 use super::{Chip8CPU, VIDEO_HEIGHT, VIDEO_WIDTH, START_ADDR, SPRITE_WIDTH}; 
 
+mod function_table;
+
 // Op-Code implementations
 impl Chip8CPU { 
 
@@ -372,6 +374,11 @@ impl Chip8CPU {
         for i in 0..vx { 
             self.v[i] = self.memory[self.index as usize + i]; 
         }
+    }
+
+    /// Does Nothing 
+    fn no_op(&mut self, _ : u16) { 
+
     }
 
 }
