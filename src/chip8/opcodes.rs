@@ -184,11 +184,33 @@ impl Chip8CPU {
         self.v[vx] = self.random_byte() & val ;
     }
 
-    // TODO: Test functions below 
 
-    /// Display n-byte spryte starting in the index (vx, vy) and draws N bytes. sets VF to 0
+    /// Display n-byte sprite starting in the index (vx, vy) and draws N bytes. sets VF to 0. If any two sprites collide then VF is set to 1.
     /// 
     /// ```opcode => 0xDxyn```
+    /// 
+    /// # Explanation
+    /// 
+    /// A sprite byte is a byte read from memory starting at the address contained at the index register. Call this address I. 
+    /// The CPU will read each and every byte from address I up to address I + n
+    /// 
+    /// A sprite byte is some collection of ```0bXXXX|XXXX``` byte where each ```X``` is a bit 
+    /// ( the | is a divisor between 4 bits or a "nibble" of a byte). Each byte corresponds to a row of our sprite and each bit corresponds to a single pixel. 
+    /// So given that there are 8 bits in a byte there are a total of 8 cols per row for a single sprite.
+    /// 
+    /// This function then translates each and every byte into a set of pixel values. Pixels are ON or OFF and each bit in a sprite byte represents a pixel
+    /// To find out if each pixel is ON or OFF one can AND the sprite byte with the value 0b1000|0000 and shifting. Should the AND ever be Non-zero then one knows that 
+    /// the pixel is ON.
+    /// 
+    /// For Example take sprite 0xF6  which in binary is 0b1111|0110 
+    /// 
+    /// In the first iteration of the loop 0b1111|0110  is AND-ed with 0b1000|0000 this results in the value 0b1000|0000
+    /// 
+    /// In the next iteration one shifts the bit down by 1. So one ANDs  0b1111|0110  with 0b0100|0000 resulting in 0b1000|0000
+    /// 
+    /// In the 5th iteration one ANDs 0b1111|0110 with 0b0000|1000 which results in 0b0000|0000
+    /// 
+    /// Any time any non-zero byte is found then the display buffer at location I + row is set to ON
     fn drw_vx_vy_n(&mut self, opcode: u16) { 
 
         let vx = ((opcode & 0x0F00) >> 8) as usize;  
@@ -206,22 +228,6 @@ impl Chip8CPU {
             let sprite_byte = self.memory[self.index as usize  + row]; 
 
             for col in 0..SPRITE_WIDTH as usize{ 
-                /* 
-                    A sprite pixel is the byte read from memory read as binary values 1 or 0. 
-                    Here one takes the spryte byte which is some collection of 0bXXXX|XXXX byte where each X is a bit 
-                    ( the | is a divisor between 4 bits or a "nibble" of a byte)
-
-                    One then ANDS it with the byte 0b1000|0000 shifted by the number of cols.
-
-                    For Example take sprite 0xF6  which in binary is 0b1111|0110 
-                    
-                    In the first iteration of the loop 0b1111|0110  is AND-ed with 0b1000|0000 this results in the value 0b1000|0000
-                    In the next iteration one shifts the bit down by 1. So one ANDs  0b1111|0110  with 0b0100|0000 resulting in 0b1000|0000
-                    
-                    In the 5th iteration one ANDs 0b1111|0110 with 0b0000|1000 which results in 0b0000|0000
-
-                    Any time any non-zero byte is found then the display buffer at location I + row is set to ON
-                */
                 let sprite_pixel = sprite_byte & (0x080 >> col); 
 
                 let screen_idx = ((y_pos as usize + row) * (VIDEO_WIDTH as usize ) + (x_pos as usize + col)) as usize;
@@ -240,6 +246,8 @@ impl Chip8CPU {
             }
         }
     }
+
+    // TODO: Test functions below 
 
     /// Skip the next instruction if key with the value of Vx is pressed. 
     /// 
@@ -609,13 +617,71 @@ mod tests {
     }
 
 
+    /// test Chip8 CPU's drawing functions ability to draw sprites in expected coordinates
+    /// next to one another without false collisions.
     #[test]
     fn display_test() {
 
         // sprites are 8-cols wide. and rely on the register values for starting x and y positions. 
-        let mut cpu = Chip8CPU::new(); 
+        let mut cpu = Chip8CPU::new();
 
-        unimplemented!();
+        //sprite is a filled rectangle of two rows and 10 cols. Split into two sprites since each sprite is max 8 cols
+        let rect : [u8; 4] = [0xFF, 0xFF, 0xC0, 0xC0]; 
+        cpu.load_rom_from_bytes(rect.as_ref()); // load the sprites to the begining of memory
+        cpu.index = START_ADDR as u16; // 
+        // the rectangle will start at 
+        set_registers(&mut cpu,&[(1,1), (2,1)] ); // the start of the byte is at 1, 1
+        let mut opcode = 0xD122; // read registers 1 and 2 and read 2 bytes from I to I + 1
+        cpu.drw_vx_vy_n(opcode);
+        cpu.index += 2; // increment index for next sprite
+        opcode = 0xD122; // read registers 1 and 2 and read 2 bytes from I to I + 1
+        set_registers(&mut cpu,&[(1,9), (2,1)] ); // the start of the byte is at 1, 9. No collision expected here
+        cpu.drw_vx_vy_n(opcode);
+        // there should have been no collision
+        assert_eq!(cpu.v[0xF], 0); 
+        assert_eq!([0 ; 64].as_ref(), cpu.disp_buf[0..64].as_ref()); // first row is empty
+
+        let mut expected_col = [0; 64]; 
+        for i in 0..10 { 
+            expected_col[i + 1] = 255; 
+        }
+
+        assert_eq!(expected_col.as_ref(), cpu.disp_buf[64..128].as_ref());
+        assert_eq!(expected_col.as_ref(), cpu.disp_buf[128..192].as_ref());
+
+    }
+
+    #[test]
+    fn drw_collision_test() {
+                let mut cpu = Chip8CPU::new();
+
+                //sprite is a filled rectangle of two rows and 9 cols.
+                // the first portion of the sprite is a filled 8 column rect, the next is a 2col square that collides with a side of the rectangle
+                let rect : [u8; 4] = [0xFF, 0xFF, 0xC0, 0xC0]; 
+                cpu.load_rom_from_bytes(rect.as_ref()); // load the sprites to the begining of memory
+                cpu.index = START_ADDR as u16; // 
+                
+                set_registers(&mut cpu,&[(1,1), (2,1)] ); 
+                let mut opcode = 0xD122; 
+                cpu.drw_vx_vy_n(opcode);
+                cpu.index += 2; 
+                opcode = 0xD122; 
+                set_registers(&mut cpu,&[(1,8), (2,1)] ); 
+                cpu.drw_vx_vy_n(opcode);
+                // there should have been no collision
+                assert_eq!(cpu.v[0xF], 1); 
+                assert_eq!([0 ; 64].as_ref(), cpu.disp_buf[0..64].as_ref()); // first row is empty
+        
+                let mut expected_col = [0; 64]; 
+                for i in 0..9 { 
+                    expected_col[i + 1] = 255; 
+                }
+                expected_col[8] = 0; // the XOR collision will cause one byte to be 0. 
+        
+                assert_eq!(expected_col.as_ref(), cpu.disp_buf[64..128].as_ref());
+                assert_eq!(expected_col.as_ref(), cpu.disp_buf[128..192].as_ref());
+        
+        
     }
 
     // uses array of (register idx, register val) to set register easily
