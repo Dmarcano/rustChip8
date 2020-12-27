@@ -127,7 +127,7 @@ impl  Chip8CPU{
     }
 
      /// given some iterable of bytes, loads the bytes onto Chip8's memory
-     pub fn load_rom_from_bytes< U : std::io::Read>(&mut self, source : U) { 
+     pub fn load_rom_from_bytes(&mut self, source : impl std::io::Read) { 
         for (i, byte) in source.bytes().enumerate() { 
             self.memory[START_ADDR  + i] = byte.unwrap(); 
         }
