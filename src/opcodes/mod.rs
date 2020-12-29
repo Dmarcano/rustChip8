@@ -380,8 +380,6 @@ impl Chip8CPU {
         }
     }
 
-    /// Does Nothing
-    fn no_op(&mut self, _: u16) {}
 }
 
 #[cfg(test)]
