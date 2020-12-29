@@ -64,6 +64,8 @@ pub struct Chip8CPU {
 
     /// The keyboard buffer that holds values for the Chip-8's keyboard
     keyboard: [u8; 16],
+
+    opcode_table : [opcode_function_getter; 16]
 }
 
 // public methods
@@ -85,6 +87,8 @@ impl Chip8CPU {
         // write the fontset into memory starting at 0x50
         memory[0x50..0x50 + FONTSET.len()].copy_from_slice(&FONTSET);
 
+        let opcode_table = Chip8CPU::create_function_table(); 
+
         Chip8CPU {
             v,
             memory,
@@ -97,6 +101,7 @@ impl Chip8CPU {
             rng,
             disp_buf,
             keyboard,
+            opcode_table
         }
     }
 
@@ -155,10 +160,10 @@ impl Chip8CPU {
 
     fn process_opcode(&mut self, opcode: u16) {
 
-        let val = Chip8CPU::table_0(opcode);
-        val(self, opcode);
+        let table_idx = ((opcode & 0xF000) >> 12) as usize; 
+        let opcode_func = self.opcode_table[table_idx](opcode); 
+        opcode_func(self, opcode);
 
-        unimplemented!()
     }
 
     fn random_byte(&mut self) -> u8 {
