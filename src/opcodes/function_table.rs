@@ -52,63 +52,63 @@ impl Chip8CPU {
         // unimplemented!()
     } 
 
-    pub(crate) fn table_1(_opcode : u16) -> opcode_fn { 
+    fn table_1(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::jmp_addr; 
     }
 
-    pub(crate) fn table_2(_opcode : u16) -> opcode_fn { 
+    fn table_2(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::call_addr; 
     } 
 
-    pub(crate) fn table_3(_opcode : u16) -> opcode_fn { 
+    fn table_3(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::skip_vx; 
     } 
 
-    pub(crate) fn table_4(_opcode : u16) -> opcode_fn { 
+    fn table_4(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::skip_vx; 
     } 
 
-    pub(crate) fn table_5(_opcode : u16) -> opcode_fn { 
+   fn table_5(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::skip_vx_vy_eq;
     } 
 
-    pub(crate) fn table_6(_opcode : u16) -> opcode_fn { 
+    fn table_6(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::set_vx;
     } 
 
-    pub(crate) fn table_7(_opcode : u16) -> opcode_fn { 
+    fn table_7(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::set_vx;
     } 
 
-    pub(crate) fn table_8(_opcode : u16) -> opcode_fn { 
+   fn table_8(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::set_vx_vy;
     } 
 
-    pub(crate) fn table_9(_opcode : u16) -> opcode_fn { 
+   fn table_9(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::skip_vx_vy_ne;
     } 
 
-    pub(crate) fn table_a(_opcode : u16) -> opcode_fn { 
+   fn table_a(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::set_i;
     } 
 
-    pub(crate) fn table_b(_opcode : u16) -> opcode_fn { 
+    fn table_b(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::jmp_v0_addr;
     } 
 
-    pub(crate) fn table_c(_opcode : u16) -> opcode_fn { 
+    fn table_c(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::rnd_vx_byte;
     } 
 
-    pub(crate) fn table_d(_opcode : u16) -> opcode_fn { 
+    fn table_d(_opcode : u16) -> opcode_fn { 
         return Chip8CPU::drw_vx_vy_n;
     } 
 
-    pub(crate) fn table_e(opcode : u16) -> opcode_fn { 
+    fn table_e(opcode : u16) -> opcode_fn { 
         unimplemented!()
     } 
 
-    pub(crate) fn table_f(opcode : u16) -> opcode_fn { 
+    fn table_f(opcode : u16) -> opcode_fn { 
         unimplemented!()
     } 
 }
