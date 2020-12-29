@@ -65,7 +65,7 @@ pub struct Chip8CPU {
     /// The keyboard buffer that holds values for the Chip-8's keyboard
     keyboard: [u8; 16],
 
-    opcode_table : [opcode_function_getter; 16]
+    opcode_table : [OpcodeFnGetter; 16]
 }
 
 // public methods

@@ -8,16 +8,16 @@ use super::*;
 */
 
 
-pub(crate) type opcode_fn = fn (&mut Chip8CPU, u16); 
+pub(crate) type OpcodeFn = fn (&mut Chip8CPU, u16); 
 
-pub(crate) type opcode_function_getter = fn (u16) -> opcode_fn; 
+pub(crate) type OpcodeFnGetter = fn (u16) -> OpcodeFn; 
 
 
 
 
 impl Chip8CPU {
 
-    pub(crate) fn create_function_table() -> [opcode_function_getter; 16] { 
+    pub(crate) fn create_function_table() -> [OpcodeFnGetter; 16] { 
         [
             Chip8CPU::table_0, 
             Chip8CPU::table_1,
@@ -39,7 +39,7 @@ impl Chip8CPU {
         ]
     }
     
-    pub(crate) fn table_0(opcode : u16) -> opcode_fn { 
+    pub(crate) fn table_0(opcode : u16) -> OpcodeFn { 
 
         let idx = opcode & 0x000F;
         
@@ -52,59 +52,59 @@ impl Chip8CPU {
         // unimplemented!()
     } 
 
-    fn table_1(_opcode : u16) -> opcode_fn { 
+    fn table_1(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::jmp_addr; 
     }
 
-    fn table_2(_opcode : u16) -> opcode_fn { 
+    fn table_2(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::call_addr; 
     } 
 
-    fn table_3(_opcode : u16) -> opcode_fn { 
+    fn table_3(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::skip_vx; 
     } 
 
-    fn table_4(_opcode : u16) -> opcode_fn { 
+    fn table_4(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::skip_vx; 
     } 
 
-   fn table_5(_opcode : u16) -> opcode_fn { 
+   fn table_5(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::skip_vx_vy_eq;
     } 
 
-    fn table_6(_opcode : u16) -> opcode_fn { 
+    fn table_6(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::set_vx;
     } 
 
-    fn table_7(_opcode : u16) -> opcode_fn { 
+    fn table_7(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::set_vx;
     } 
 
-   fn table_8(_opcode : u16) -> opcode_fn { 
+   fn table_8(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::set_vx_vy;
     } 
 
-   fn table_9(_opcode : u16) -> opcode_fn { 
+   fn table_9(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::skip_vx_vy_ne;
     } 
 
-   fn table_a(_opcode : u16) -> opcode_fn { 
+   fn table_a(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::set_i;
     } 
 
-    fn table_b(_opcode : u16) -> opcode_fn { 
+    fn table_b(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::jmp_v0_addr;
     } 
 
-    fn table_c(_opcode : u16) -> opcode_fn { 
+    fn table_c(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::rnd_vx_byte;
     } 
 
-    fn table_d(_opcode : u16) -> opcode_fn { 
+    fn table_d(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::drw_vx_vy_n;
     } 
 
-    fn table_e(opcode : u16) -> opcode_fn { 
+    fn table_e(opcode : u16) -> OpcodeFn { 
 
         let idx = opcode & 0x00FF;
 
@@ -115,7 +115,7 @@ impl Chip8CPU {
         }
     } 
 
-    fn table_f(opcode : u16) -> opcode_fn { 
+    fn table_f(opcode : u16) -> OpcodeFn { 
 
         let idx = opcode & 0x00FF;
 
