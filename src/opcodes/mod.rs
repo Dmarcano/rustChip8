@@ -7,14 +7,14 @@ impl Chip8CPU {
     /// Returns from subroutine using the stack to return to before the call was made
     ///
     /// for ```opcode => 0x00E0 ```
-    fn clear_display(&mut self) {
+    fn clear_display(&mut self, _ : u16) {
         self.disp_buf.iter_mut().for_each(|m| *m = 0);
     }
 
     /// Returns from subroutine using the stack to return to before the call was made
     ///
     /// for ```opcode => 0x00EE```
-    fn ret(&mut self) {
+    fn ret(&mut self, _ : u16) {
         // return from a subroutine
         self.sp -= 1;
         self.pc = self.stack[self.sp as usize];

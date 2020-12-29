@@ -40,7 +40,16 @@ impl Chip8CPU {
     }
     
     pub(crate) fn table_0(opcode : u16) -> opcode_fn { 
-        unimplemented!()
+
+        let idx = opcode & 0x000F;
+        
+        match idx {
+            0x0 => {Chip8CPU::clear_display},
+            0xE => {Chip8CPU::ret},
+            _ => {panic!("Wrong opcode used for function table!")}
+        }
+
+        // unimplemented!()
     } 
 
     pub(crate) fn table_1(_opcode : u16) -> opcode_fn { 
