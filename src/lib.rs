@@ -200,7 +200,6 @@ mod tests {
         let exp_v: [u8; 16] = [0; 16];
         let exp_pc = START_ADDR as u16;
         let exp_stack = [0; 16];
-        let exp_disp_buf = [0; 32 * 64];
         let exp_keyboard = [0; 16];
 
         check_fontset(&cpu.memory);
