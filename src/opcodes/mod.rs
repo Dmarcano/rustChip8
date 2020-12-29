@@ -1,19 +1,19 @@
 use super::{Chip8CPU, SPRITE_WIDTH, START_ADDR, VIDEO_HEIGHT, VIDEO_WIDTH};
 
-mod function_table;
+pub(crate) mod function_table;
 
 // Op-Code implementations
 impl Chip8CPU {
     /// Returns from subroutine using the stack to return to before the call was made
     ///
-    /// for ```opcode => 00E0 ```
+    /// for ```opcode => 0x00E0 ```
     fn clear_display(&mut self) {
         self.disp_buf.iter_mut().for_each(|m| *m = 0);
     }
 
     /// Returns from subroutine using the stack to return to before the call was made
     ///
-    /// for ```opcode => 00EE```
+    /// for ```opcode => 0x00EE```
     fn ret(&mut self) {
         // return from a subroutine
         self.sp -= 1;
