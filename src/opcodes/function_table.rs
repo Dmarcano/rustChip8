@@ -46,7 +46,7 @@ impl Chip8CPU {
         match idx {
             0x0 => {Chip8CPU::clear_display},
             0xE => {Chip8CPU::ret},
-            _ => {panic!("Wrong opcode used for function table!")}
+            _ => {panic!("Unexpected opcode for table e! got opcode: {}", opcode)}
         }
 
         // unimplemented!()
@@ -105,10 +105,31 @@ impl Chip8CPU {
     } 
 
     fn table_e(opcode : u16) -> opcode_fn { 
-        unimplemented!()
+
+        let idx = opcode & 0x00FF;
+
+        match idx { 
+            0x9E => {Chip8CPU::skip_vx_keypad},
+            0xA1 => {Chip8CPU::not_skip_vx_keypad},
+            _ => {panic!("Unexpected opcode for table e! got opcode: {}", opcode)}
+        }
     } 
 
     fn table_f(opcode : u16) -> opcode_fn { 
-        unimplemented!()
+
+        let idx = opcode & 0x00FF;
+
+        match idx { 
+            0x07 => {Chip8CPU::set_vx_delay_timer},
+            0x0A => {Chip8CPU::load_keypress_vx},
+            0x15 => {Chip8CPU::set_delay_timer_vx},
+            0x18 => {Chip8CPU::set_snd_timer_vx},
+            0x1E => {Chip8CPU::add_idx_vx},
+            0x29 => {Chip8CPU::set_idx_font_sprite_vx},
+            0x33 => {Chip8CPU::set_idx_bcd_vx},
+            0x55=> {Chip8CPU::write_x_registers},
+            0x65 => {Chip8CPU::read_x_registers},
+            _ => {panic!("Unexpected opcode for table e! got opcode: {}", opcode)}
+        }
     } 
 }

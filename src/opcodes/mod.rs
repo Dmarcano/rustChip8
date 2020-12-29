@@ -416,7 +416,7 @@ mod tests {
         cpu.call_addr(opcode);
         assert_eq!(cpu.pc, 0x250);
 
-        cpu.ret();
+        cpu.ret(opcode);
         assert_eq!(cpu.pc, 0xFAF); // return to previous address at 0xFAF
 
         cpu.reset();
