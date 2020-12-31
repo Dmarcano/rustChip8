@@ -4,7 +4,6 @@ mod opcodes;
 
 use opcodes::function_table::*;
 
-//TODO does usize break anything later on?
 const START_ADDR: usize = 0x200;
 
 const FONTSET_SIZE: usize = 80;
@@ -151,8 +150,6 @@ impl Chip8CPU {
 
 // private helper functions
 impl Chip8CPU {
-
-    
 
     fn fetch_opcode(&self) -> u16 {
         (self.memory[self.pc as usize] as u16) << 8 | (self.memory[(self.pc + 1) as usize]) as u16

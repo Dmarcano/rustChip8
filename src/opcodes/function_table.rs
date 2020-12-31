@@ -13,8 +13,6 @@ pub(crate) type OpcodeFn = fn (&mut Chip8CPU, u16);
 pub(crate) type OpcodeFnGetter = fn (u16) -> OpcodeFn; 
 
 
-
-
 impl Chip8CPU {
 
     pub(crate) fn create_function_table() -> [OpcodeFnGetter; 16] { 
