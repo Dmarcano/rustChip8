@@ -1,4 +1,6 @@
-//! This
+//! This module consists of a "function table" of sorts that uses both an array and Rust's match 
+//! features to match all opcodes 
+//! 
 //! 
 
 use super::*;
