@@ -2,6 +2,8 @@ use super::{Chip8CPU, SPRITE_WIDTH, START_ADDR, VIDEO_HEIGHT, VIDEO_WIDTH};
 
 pub(crate) mod function_table;
 
+pub mod dissassembler; 
+
 // Op-Code implementations
 impl Chip8CPU {
     /// Returns from subroutine using the stack to return to before the call was made
