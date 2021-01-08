@@ -1,8 +1,9 @@
 use rand::Rng;
 
 mod opcodes;
-
 use opcodes::function_table::*;
+pub mod dissassembler; 
+
 
 const START_ADDR: usize = 0x200;
 
@@ -138,6 +139,14 @@ impl Chip8CPU {
         let opcode = self.fetch_opcode();
         self.increment_pc();
         self.process_opcode(opcode);
+
+        if self.sound_timer > 0 { 
+            self.sound_timer -= 1; 
+        }
+
+        if self.delay_timer > 0 { 
+            self.delay_timer -= 1; 
+        }
     }
 
     /// Sets the keyboard value at the given idx of the CHIP8 to a value
