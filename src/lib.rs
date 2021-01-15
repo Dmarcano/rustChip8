@@ -1,3 +1,8 @@
+//! The Chip8CPU crate provides a ready Chip-8 Cpu interpreter that implements all of the Chip8's 35 opcodes. 
+//! One can use this CPU and implement a method to display its graphics 
+//! 
+//! 
+
 use rand::Rng;
 
 mod opcodes;
@@ -34,6 +39,18 @@ const SPRITE_WIDTH: u8 = 8;
 
 /// Chip-8 CPU capable of reading and processing instructions
 /// more information on chip-8 can be found at http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
+/// 
+/// ## Examples
+/// 
+/// ```no_run
+///     let mut cpu = Chip8CPU::new()
+///     // load a ROM file from path
+///     cpu.load_rom_from_file(String::From("path/filename"))
+///     // 
+///     cpu.cycle()
+/// 
+/// ```
+/// 
 pub struct Chip8CPU {
     /// general purpose registers
     v: [u8; 16],
@@ -70,6 +87,8 @@ pub struct Chip8CPU {
 
 // public methods
 impl Chip8CPU {
+
+    /// Create a brand new Chip-8 CPU
     pub fn new() -> Chip8CPU {
         let v: [u8; 16] = [0; 16];
         let mut memory: [u8; 4096] = [0; 4096];
@@ -118,12 +137,13 @@ impl Chip8CPU {
         self.index = 0;
     }
 
+    /// Load a ROM from a valid path given that a filesystem is available
     pub fn load_rom_from_file(&mut self, filename: String) {
         let file = std::fs::File::open(std::path::Path::new(&filename)).unwrap();
         self.load_rom_from_bytes(file);
     }
 
-    /// given some iterable of bytes, loads the bytes onto Chip8's memory
+    /// Load a ROM in the form of some iterable (eg a Vec<u8>)
     pub fn load_rom_from_bytes(&mut self, source: impl std::io::Read) {
         for (i, byte) in source.bytes().enumerate() {
             self.memory[START_ADDR + i] = byte.unwrap();
@@ -155,6 +175,7 @@ impl Chip8CPU {
     pub fn set_keyboard(&mut self, idx: u8, val: u8) {
         self.keyboard[idx as usize] = val;
     }
+    
 }
 
 // private helper functions
