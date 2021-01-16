@@ -175,6 +175,42 @@ impl Chip8CPU {
     pub fn set_keyboard(&mut self, idx: u8, val: u8) {
         self.keyboard[idx as usize] = val;
     }
+
+    /// Return a reference to the display buffer. Meant to be used for the sole purpose of displaying graphics.
+    pub fn peek_display_buffer<'a>(&'a self) -> &'a [u8; 32*64] { 
+        & self.disp_buf
+    }    
+
+    /// Returns a reference to the main meory. Meant to be used for debugging the CPU
+    /// or displaying state without the overhead of cloning.
+    pub fn peek_memory<'a>(&'a self) -> &'a [u8; 4096] { 
+        &self.memory
+    }
+
+    /// Clones the display buffer to use in graphics
+    pub fn clone_display_buffer(&self) -> [u8; 32*64] { 
+        self.disp_buf.clone()
+    }
+
+    /// Clones the cpu memory for either debugging or display purposes.
+    pub fn clone_memory(&self) -> [u8; 4096] { 
+        self.memory.clone()
+    }
+
+    /// clones the cpu's registers should their state be needed for display or debugging purposes
+    pub fn clone_registers(&self) -> [u8; 16] { 
+        self.v.clone()
+    }
+
+    /// clones the cpu's keyboard should their state be needed for display or debugging
+    pub fn clone_keyboard(&self) -> [u8; 16] { 
+        self.keyboard.clone()   
+    }
+
+    pub fn pc(&self) -> u16 { 
+        self.pc 
+    }
+
     
 }
 
