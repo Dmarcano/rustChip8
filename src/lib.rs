@@ -43,11 +43,12 @@ const SPRITE_WIDTH: u8 = 8;
 /// ## Examples
 /// 
 /// ```no_run
-///     let mut cpu = Chip8CPU::new()
+///     use chip8::Chip8CPU; 
+///     let mut cpu = Chip8CPU::new();
 ///     // load a ROM file from path
-///     cpu.load_rom_from_file(String::From("path/filename"))
+///     cpu.load_rom_from_file(String::from("path/filename"));
 ///     // 
-///     cpu.cycle()
+///     cpu.cycle();
 /// 
 /// ```
 /// 
