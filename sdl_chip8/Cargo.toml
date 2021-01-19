@@ -1,0 +1,11 @@
+[package]
+name = "sdl_chip8"
+version = "0.1.0"
+authors = ["Diego <marcanp.diego@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chip8 = {path = "../."}
+sdl2 = "0.34.3"
