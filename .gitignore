@@ -1,2 +1,3 @@
 /target
+/sdl_chip8/target/
 Cargo.lock

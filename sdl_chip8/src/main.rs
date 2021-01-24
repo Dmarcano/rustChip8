@@ -53,8 +53,7 @@ impl SdlDisplay {
                 self.canvas.set_draw_color(color);
 
                 let _ = 
-                self.canvas.fill_rect(Rect::new(row as i32, row as i32, PIXEL_WIDTH, PIXEL_WIDTH));
-
+                self.canvas.fill_rect(Rect::new(col as i32 * PIXEL_WIDTH as i32, row as i32 * PIXEL_WIDTH as i32, PIXEL_WIDTH, PIXEL_WIDTH));
             }
         }
         self.canvas.present();
@@ -71,7 +70,7 @@ impl SdlDisplay {
 }
 
 fn main() {
-    let file_name = "roms/BC_test.ch8";
+    let file_name = "roms/test_opcode.ch8";
     let mut cpu = Chip8CPU::new();
     cpu.load_rom_from_file(String::from(file_name));
 
@@ -84,11 +83,13 @@ fn main() {
 
         let memory = cpu.clone_memory(); 
 
-        for _ in 0..9 { // emulate a 500Hz cpu clockrate 
+        for _ in 0..1 { // emulate a 500Hz cpu clockrate 
             let pc = cpu.pc() as usize; 
         //(self.memory[self.pc as usize] as u16) << 8 | (self.memory[(self.pc + 1) as usize]) as u16 
             let opcode = (memory[pc]  as u16 ) << 8| (memory[pc+ 1]as u16) ;
             let instr = chip8::dissassembler::disassemble(opcode);
+
+            println!("pc at {} opcode {:#04X?} instruction: {}", pc, opcode, instr);
 
             cpu.cycle();
         };

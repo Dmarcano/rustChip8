@@ -81,8 +81,7 @@ impl Chip8CPU {
     /// Mutates Vx according to the opcode
     ///
     /// 1. ```opcodes => 0x6xkk``` sets ```Vx``` as the value ```kk```
-    /// 2. ```opcodes => 0x7xkk``` adds the val ```kk``` to ```Vx```
-
+    /// 2. ```opcodes => 0x7xkk``` adds the val ```kk``` to ```Vx``` overflows trigger no flags 
     fn set_vx(&mut self, opcode: u16) {
         let instruction = (opcode & 0xF000) >> 12;
         let vx = ((opcode & 0x0F00) >> 8) as u8;
@@ -90,10 +89,12 @@ impl Chip8CPU {
 
         match instruction {
             6 => {
+               
                 self.v[vx as usize] = val;
             }
             7 => {
-                self.v[vx as usize] += val;
+                let (sum, _) =  self.v[vx as usize].overflowing_add(val);
+                self.v[vx as usize] = sum;
             }
             _ => {
                 panic!(
