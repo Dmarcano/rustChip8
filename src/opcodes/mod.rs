@@ -227,8 +227,8 @@ impl Chip8CPU {
         let vy = ((opcode & 0x00F0) >> 4) as usize;
         let sprite_len = (opcode & 0x000F) as usize;
 
-        let x_pos = self.v[vx] % VIDEO_WIDTH;
-        let y_pos = self.v[vy] % VIDEO_HEIGHT;
+        let x_pos = (self.v[vx] % VIDEO_WIDTH) as usize;
+        let y_pos = (self.v[vy] % VIDEO_HEIGHT )as usize;
 
         // set collision register to 0 "no-collition"
         self.v[0xF] = 0;
@@ -240,8 +240,11 @@ impl Chip8CPU {
             for col in 0..SPRITE_WIDTH as usize {
                 let sprite_pixel = sprite_byte & (0x080 >> col);
 
-                let screen_idx = ((y_pos as usize + row) * (VIDEO_WIDTH as usize)
-                    + (x_pos as usize + col)) as usize;
+                let x_idx = (x_pos + col) % VIDEO_WIDTH as usize; 
+                let y_idx = (y_pos + row )% VIDEO_HEIGHT as usize;
+
+                let screen_idx =  y_idx * (VIDEO_WIDTH as usize) + x_idx;
+
                 let mut screen_pixel = self.disp_buf[screen_idx];
 
                 if sprite_pixel != 0x00 {
@@ -365,7 +368,7 @@ impl Chip8CPU {
     ///
     /// ```opcode => 0xFx55```
     fn write_x_registers(&mut self, opcode: u16) {
-        let vx = ((opcode & 0x0F00) >> 8) as usize;
+        let vx = (((opcode & 0x0F00) >> 8) as usize) + 1;
 
         for i in 0..vx {
             self.memory[self.index as usize + i] = self.v[i];
@@ -376,7 +379,7 @@ impl Chip8CPU {
     ///
     /// ```opcode => 0xFx65```
     fn read_x_registers(&mut self, opcode: u16) {
-        let vx = ((opcode & 0x0F00) >> 8) as usize;
+        let vx = (((opcode & 0x0F00) >> 8) as usize)+1;// the plus 1 makes the loop inclusive
         for i in 0..vx {
             self.v[i] = self.memory[self.index as usize + i];
         }
