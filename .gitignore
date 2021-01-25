@@ -1,3 +1,13 @@
-/target
-/sdl_chip8/target/
+target
 Cargo.lock
+# sdl chip 8 binaries
+/sdl_chip8/target/
+# wasm-chip 8 binaries and node modules
+**/*.rs.bk 
+wasm-pack.log 
+bin/
+pkg/
+wasm-pack.log
+# wasm frontend
+node_modules
+dist
