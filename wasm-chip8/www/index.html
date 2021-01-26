@@ -20,25 +20,42 @@
           margin: 0 auto;
           grid-template-rows: 190px 260px; 
       }
+
+      .display { 
+        grid-column: 1 / span 3;
+      }
+
+      .controls { 
+        grid-column: 1 / span 3;
+       display: flex;
+       justify-content: center;
+       padding: 10px;
+      }
   </style>
   </head>
   <body>
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
     <script src="./bootstrap.js"></script>
 
+  
+
     <div class="content">
-      <div class="display">
-        <canvas id="chip8-canvas" width="64" height="32" style="transform: scale(8); transform-origin: top left;"></canvas>
+
+      
+        <div class="display">
+          <canvas id="chip8-canvas" width="64" height="32" style="transform: scale(8); transform-origin: top left;"></canvas>
+        </div>
+
+      <div></div>
+
+
+      <div class="controls">
+        <button id="forward-chip8" >forward-chip8</button>
       </div>
-  
-    <br>
-  
-    
+
     </div>
 
-    <div class="controls">
-      <button id="forward-chip8" >forward-chip8</button>
-  </div>
+    
     
   </body>
 </html>
