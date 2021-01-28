@@ -8,30 +8,74 @@ const SCREEN_HEIGHT = 32;
 const canvas = document.getElementById('chip8-canvas');
 const ctx = canvas.getContext('2d')
 
+let isRunning = false; 
+
+const color = [255, 0, 0, 255];
+
+const roms = ["BC_test", "octojam2title", "danm8ku", "test_opcode" ]
+
 const main = () =>  { 
     let chip8 = wasm.WasmChip8.new(); 
     console.log(chip8)
-    let name = "BC_test.ch8";
+    let name = "octojam2title.ch8";
     
-    get_rom_file(name).then((rom) => { 
+    const forward_btn = document.getElementById('forward-chip8');
+    const start_btn = document.getElementById('start-chip8');
+    const stop_btn = document.getElementById('stop-chip8');
 
-        chip8.load_rom_js(rom); 
-    
-       
-        let btn = document.getElementById('forward-chip8');
-        btn.addEventListener("click", function() { 
-           update_emulator(chip8);
+
+    forward_btn.addEventListener("click", function() { 
+            emulate_cycle(chip8);
         })
-    
+
+    start_btn.addEventListener("click", function() { 
+        isRunning = true; 
+        stop_btn.disabled = false; 
+        start_btn.disabled = true; 
+        forward_btn.disabled = true; 
+
+
+    })
+
+    stop_btn.addEventListener('click', function() { 
+        isRunning = false;
+        stop_btn.disabled = true; 
+        start_btn.disabled = false; 
+        forward_btn.disabled = false;
+    })
+
+
+    get_rom_file(name).then((rom) => { 
+        chip8.load_rom_js(rom); 
+        update_canvas(chip8);
+
+        emulation_loop(chip8);
+
     }); 
 }
 
-const update_emulator = (chip8) => { 
-    for(var i =0; i < 9; i++) {
-        chip8.cycle();
-    }
-
+const emulate_cycle = (chip8) => { 
+    chip8.cycle(); 
     update_canvas(chip8); 
+}
+
+
+const emulation_loop = (chip8) => { 
+
+
+    if(isRunning) { 
+        for(var i =0; i < 9; i++) {
+            chip8.cycle(); 
+        }
+        update_canvas(chip8); 
+
+        if(!isRunning) { 
+            return;
+        }
+    }
+    window.requestAnimationFrame(() => {
+        emulation_loop(chip8);
+      });
 }
 
 const update_canvas = (chip8) => {
@@ -64,5 +108,7 @@ const get_rom_file = async(name) => {
     let buff = await file.arrayBuffer(); 
     return new DataView(buff, 0, buff.byteLength); 
 }
+
+
 
 main()

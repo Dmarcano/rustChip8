@@ -41,8 +41,8 @@ impl WasmChip8 {
         self.cpu.cycle() 
     }
 
-    pub fn update_ui(&mut self) { 
-
+    pub fn reset(&mut self) { 
+        self.cpu.reset(); 
     }
 
     pub fn key_down(&mut self, key : u8) { 
