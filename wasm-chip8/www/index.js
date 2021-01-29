@@ -12,7 +12,7 @@ let isRunning = false;
 
 const CANVAS_COLOR = [255, 0, 0, 255];
 
-const ROMS = ["BC_test", "octojam2title", "danm8ku", "test_opcode" ]
+const ROMS = ["BC_test", "octojam2title", "danm8ku", "test_opcode", "snake" ]
 
 const main = () =>  { 
     let chip8 = wasm.WasmChip8.new(); 
@@ -57,6 +57,26 @@ const main = () =>  {
         forward_btn.disabled = false;
     })
 
+    document.addEventListener('keydown', event => { 
+        if (CHIP8_KEYBOARD.hasOwnProperty(event.key)) {
+            let key_code = CHIP8_KEYBOARD[event.key];
+            chip8.key_down(key_code);
+        }
+        else { 
+            console.log(`wrong key!, used ${event.key}`)
+        }
+    });
+
+    document.addEventListener('keyup', event => { 
+        if (CHIP8_KEYBOARD.hasOwnProperty(event.key)) {
+            let key_code = CHIP8_KEYBOARD[event.key];
+            chip8.key_up(key_code);
+        }
+        else { 
+            console.log(`wrong key!, used ${event.key}`)
+        }
+    });
+
 
     get_rom_file(default_rom).then((rom) => { 
         chip8.reset();
@@ -100,9 +120,9 @@ const update_canvas = (chip8) => {
     // data is a 4*Width*Height array since each set of 4 indeces corresponds to one pixels RGBA val
     for(var i = 0; i < data.length; i += 4) { 
         if(chip8_display_buf[i/4]) { 
-            data[i]     = 255    // red
-            data[i + 1] = 0; // green
-            data[i + 2] = 0; // blue
+            data[i]     = CANVAS_COLOR[0]    // red
+            data[i + 1] = CANVAS_COLOR[1]; // green
+            data[i + 2] = CANVAS_COLOR[2]; // blue
             data[i+3] = 255; //alpha
         }
         else { 
@@ -147,6 +167,26 @@ const create_rom_selection = () => {
 // |A|0|B|F|        |Z|X|C|V|
 // +-+-+-+-+        +-+-+-+-+
 
-
+const CHIP8_KEYBOARD = {
+    '1': 0x1,
+    '2': 0x2,
+    '3': 0x3,
+    '4': 0xc,
+  
+    'q': 0x4,
+    'w': 0x5,
+    'e': 0x6,
+    'r': 0xd,
+  
+    'a': 0x7,
+    's': 0x8,
+    'd': 0x9,
+    'f': 0xe,
+  
+    'z': 0xa,
+    'x': 0x0,
+    'c': 0xb,
+    'v': 0xf,
+};
 
 main()
