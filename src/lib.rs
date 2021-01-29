@@ -8,6 +8,7 @@ use rand::Rng;
 mod opcodes;
 use opcodes::function_table::*;
 pub mod dissassembler; 
+pub mod cycle_error;
 
 
 const START_ADDR: usize = 0x200;
