@@ -4,13 +4,14 @@
 //! 
 
 use super::*;
+use super::super::cycle_error;
 
 /* the function table keeps track of what function to use based on the opcode there is a first table that maps the digits
     0x0-0xF to their valid opcode functions. 
 */
 
 
-pub(crate) type OpcodeFn = fn (&mut Chip8CPU, u16); 
+pub(crate) type OpcodeFn = fn (&mut Chip8CPU, u16) ->Result<(), cycle_error::CycleError>; 
 
 pub(crate) type OpcodeFnGetter = fn (u16) -> OpcodeFn; 
 
@@ -46,11 +47,16 @@ impl Chip8CPU {
         match idx {
             0x0 => {Chip8CPU::clear_display},
             0xE => {Chip8CPU::ret},
-            _ => {panic!("Unexpected opcode for table e! got opcode: {}", opcode)}
+            _ => {Chip8CPU::wrong_opcode}
         }
-
-        // unimplemented!()
-    } 
+    }
+    
+    fn wrong_opcode(&mut self, opcode : u16) -> Result<(), CycleError> { 
+        Err(CycleError{
+            message : 
+            format!("Given a bad opcode of value {:X}", opcode)
+        })
+    }
 
     fn table_1(_opcode : u16) -> OpcodeFn { 
         return Chip8CPU::jmp_addr; 
@@ -111,7 +117,7 @@ impl Chip8CPU {
         match idx { 
             0x9E => {Chip8CPU::skip_vx_keypad},
             0xA1 => {Chip8CPU::not_skip_vx_keypad},
-            _ => {panic!("Unexpected opcode for table e! got opcode: {}", opcode)}
+            _ => {Chip8CPU::wrong_opcode}
         }
     } 
 
@@ -129,7 +135,7 @@ impl Chip8CPU {
             0x33 => {Chip8CPU::set_idx_bcd_vx},
             0x55=> {Chip8CPU::write_x_registers},
             0x65 => {Chip8CPU::read_x_registers},
-            _ => {panic!("Unexpected opcode for table e! got opcode: {}", opcode)}
+            _ => {Chip8CPU::wrong_opcode}
         }
     } 
 }

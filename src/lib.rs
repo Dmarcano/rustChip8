@@ -7,6 +7,7 @@ use rand::Rng;
 
 mod opcodes;
 use opcodes::function_table::*;
+use cycle_error::CycleError; 
 pub mod dissassembler; 
 pub mod cycle_error;
 
@@ -157,10 +158,10 @@ impl Chip8CPU {
     /// 1. Fetches an opcode from memory,
     /// 2. Decodes the opcode into an instruction,
     /// 3. Executes the instruction storing any results
-    pub fn cycle(&mut self) {
+    pub fn cycle(&mut self) ->Result<(), CycleError>{
         let opcode = self.fetch_opcode();
         self.increment_pc();
-        self.process_opcode(opcode);
+        self.process_opcode(opcode)?;
 
         if self.sound_timer > 0 { 
             self.sound_timer -= 1; 
@@ -169,6 +170,8 @@ impl Chip8CPU {
         if self.delay_timer > 0 { 
             self.delay_timer -= 1; 
         }
+
+        Ok(())
     }
 
     /// Sets the keyboard value at the given idx of the CHIP8 to a value
@@ -223,11 +226,13 @@ impl Chip8CPU {
         (self.memory[self.pc as usize] as u16) << 8 | (self.memory[(self.pc + 1) as usize]) as u16
     }
 
-    fn process_opcode(&mut self, opcode: u16) {
+    fn process_opcode(&mut self, opcode: u16) ->Result<(), CycleError> {
 
         let table_idx = ((opcode & 0xF000) >> 12) as usize; 
         let opcode_func = self.opcode_table[table_idx](opcode); 
-        opcode_func(self, opcode);
+        opcode_func(self, opcode)?;
+
+        Ok(())
 
     }
 

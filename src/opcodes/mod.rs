@@ -1,6 +1,7 @@
 use super::{Chip8CPU, SPRITE_WIDTH, START_ADDR, VIDEO_HEIGHT, VIDEO_WIDTH};
 
 pub(crate) mod function_table;
+use super::cycle_error::CycleError;
 
 
 // Op-Code implementations
@@ -8,43 +9,47 @@ impl Chip8CPU {
     /// Returns from subroutine using the stack to return to before the call was made
     ///
     /// for ```opcode => 0x00E0 ```
-    fn clear_display(&mut self, _ : u16) {
+    fn clear_display(&mut self, _ : u16)  -> Result<(), CycleError> {
         self.disp_buf.iter_mut().for_each(|m| *m = 0);
+        Ok(())
     }
 
     /// Returns from subroutine using the stack to return to before the call was made
     ///
     /// for ```opcode => 0x00EE```
-    fn ret(&mut self, _ : u16) {
+    fn ret(&mut self, _ : u16)  -> Result<(), CycleError> {
         // return from a subroutine
         self.sp -= 1;
         self.pc = self.stack[self.sp as usize];
+        Ok(())
     }
 
     /// jumps to a specified address in the opcode
     ///
     /// for ```opcode => 0x1nnn```
-    fn jmp_addr(&mut self, opcode: u16) {
+    fn jmp_addr(&mut self, opcode: u16)  -> Result<(), CycleError> {
         // jump to a given address
         let addr = opcode & 0x0FFF;
         self.pc = addr;
+        Ok(())
     }
 
     /// given an opcode representing a subroutine, it jumps the ```pc``` to the memory address while saving the previous
     /// address in the stack
     ///
     /// for ```opcode => 0x2nnn```
-    fn call_addr(&mut self, opcode: u16) {
+    fn call_addr(&mut self, opcode: u16)  -> Result<(), CycleError> {
         // calls a function
         self.stack[self.sp as usize] = self.pc;
         self.sp += 1;
         self.jmp_addr(opcode);
+        Ok(())
     }
 
     /// given an opcode it compares Vx to kk in some way. Incrementing on a truthy Val
     /// 1. opcodes ```0x3xkk => skips if Vx == kk```
     /// 2. opcodes ```0x4xkk => skips if Vx != kk```
-    fn skip_vx(&mut self, opcode: u16) {
+    fn skip_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         // both SNE and SE Vx byte
 
         let instruction = ((opcode & 0xF000) >> 12) as u8;
@@ -59,30 +64,33 @@ impl Chip8CPU {
             (4, true) => {}
             (4, false) => self.increment_pc(),
             (_, _) => {
-                panic!("Given a bad opcode of value {}", opcode)
+                return Err(CycleError{
+                    message : 
+                    format!("Given a bad opcode of value {:X}. expected some variant of 0x3... or 0x4...", opcode)
+                })
             }
-        }
+        }; 
+        Ok(())
     }
 
     /// Skips next instruction based on ```Vx``` === ```Vy```
     ///
     /// 1. ```opcodes => 0x5xy0``` Skips if Vx == Vy
-    fn skip_vx_vy_eq(&mut self, opcode: u16) {
+    fn skip_vx_vy_eq(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as u8;
         let vy = ((opcode & 0x00F0) >> 4) as u8;
-
-        println!("vx: {}, vy {}", vx, vy);
 
         if self.v[vx as usize] == self.v[vy as usize] {
             self.increment_pc();
         }
+        Ok(())
     }
 
     /// Mutates Vx according to the opcode
     ///
     /// 1. ```opcodes => 0x6xkk``` sets ```Vx``` as the value ```kk```
     /// 2. ```opcodes => 0x7xkk``` adds the val ```kk``` to ```Vx``` overflows trigger no flags 
-    fn set_vx(&mut self, opcode: u16) {
+    fn set_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let instruction = (opcode & 0xF000) >> 12;
         let vx = ((opcode & 0x0F00) >> 8) as u8;
         let val = (opcode & 0x00FF) as u8;
@@ -97,12 +105,17 @@ impl Chip8CPU {
                 self.v[vx as usize] = sum;
             }
             _ => {
-                panic!(
-                    "Given a bad opcode of value {} expected some variant of 0x7... or ox6...",
-                    opcode
-                )
+                return Err(CycleError{
+              
+
+                    message : format!(
+                        "Given a bad opcode of value {:X}. expected some variant of 0x7... or 0x6...",
+                        opcode
+                    )
+                })
             }
-        }
+        };
+        Ok(())
     }
 
     /// Mutates Vx according to VY and the opcode
@@ -116,7 +129,7 @@ impl Chip8CPU {
     /// 7. ```opcode => 0x8xy6``` saves the least significant bit in Vx in VF and Right shifts Vx by 1
     /// 8. ```opcode => 0x8xy7``` ```Subs```'s Vx and Vy and sets VF to 1 if the subtraction overflows
     /// 9. ```opcode => 0x8xyE``` saves the most significant bit in Vx in VF and left shifts Vx by 1
-    fn set_vx_vy(&mut self, opcode: u16) {
+    fn set_vx_vy(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let vy = ((opcode & 0x00F0) >> 4) as usize;
 
@@ -151,49 +164,56 @@ impl Chip8CPU {
                 self.v[vx] <<= 1;
             }
             _ => {
-                panic!(
-                    "Given a bad opcode of value {}. Expected some variant of 0x8...",
-                    opcode
-                )
+                return Err(CycleError{
+                    message : format!(
+                        "Given a bad opcode of value {:X}. Expected some variant of 0x8...",
+                        opcode
+                    )
+                })
             }
-        }
+        };
+        Ok(())
     }
 
     /// Skips next instruction based on ```Vx != Vy```
     ///
     /// 1. ```opcodes => 0x9xy0``` Skips if Vx ```!=``` Vy
-    fn skip_vx_vy_ne(&mut self, opcode: u16) {
+    fn skip_vx_vy_ne(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as u8;
         let vy = ((opcode & 0x00F0) >> 4) as u8;
 
         if self.v[vx as usize] != self.v[vy as usize] {
             self.increment_pc();
         }
+        Ok(())
     }
 
     /// Set I = nnn.
     ///
     /// ```opcode => 0xAnnn```
-    fn set_i(&mut self, opcode: u16) {
+    fn set_i(&mut self, opcode: u16)  -> Result<(), CycleError> {
         self.index = opcode & 0x0FFF;
+        Ok(())
     }
 
     /// Jump to location V0 + addr
     ///
     /// ```opcode => 0xBnnn``` jumps to ```v[0] + 0xnnn```
-    fn jmp_v0_addr(&mut self, opcode: u16) {
+    fn jmp_v0_addr(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let address = opcode & 0x0FFF;
         self.pc = self.v[0] as u16 + address;
+        Ok(())
     }
 
     /// Sets Vx to a random byte and input byte
     ///
     /// ```opcode => 0xCxkk``` sets v[x] = random byte & 0xkk
-    fn rnd_vx_byte(&mut self, opcode: u16) {
+    fn rnd_vx_byte(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let val = (opcode & 0x00FF) as u8;
 
         self.v[vx] = self.random_byte() & val;
+        Ok(())
     }
 
     /// Display n-byte sprite starting in the index (vx, vy) and draws N bytes. sets VF to 0. If any two sprites collide then VF is set to 1.
@@ -222,7 +242,7 @@ impl Chip8CPU {
     /// In the 5th iteration one ANDs 0b1111|0110 with 0b0000|1000 which results in 0b0000|0000
     ///
     /// Any time any non-zero byte is found then the display buffer at location I + row is set to ON
-    fn drw_vx_vy_n(&mut self, opcode: u16) {
+    fn drw_vx_vy_n(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let vy = ((opcode & 0x00F0) >> 4) as usize;
         let sprite_len = (opcode & 0x000F) as usize;
@@ -259,6 +279,7 @@ impl Chip8CPU {
                 }
             }
         }
+        Ok(())
     }
 
     // TODO: Test functions below
@@ -266,71 +287,78 @@ impl Chip8CPU {
     /// Skip the next instruction if key with the value of Vx is pressed.
     ///
     /// ```opcode => 0xEx9E```
-    fn skip_vx_keypad(&mut self, opcode: u16) {
+    fn skip_vx_keypad(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let key = self.v[vx] as usize;
 
         if self.keyboard[key] != 0 {
             self.increment_pc();
         }
+        Ok(())
     }
 
     /// Skip the next instruction if key with the value of Vx is not pressed.
     ///
     /// ```opcode => 0xExA1```
-    fn not_skip_vx_keypad(&mut self, opcode: u16) {
+    fn not_skip_vx_keypad(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let key = self.v[vx] as usize;
 
         if self.keyboard[key] == 0 {
             self.increment_pc();
         }
+        Ok(())
     }
 
     /// set Vx = delay timer val
     ///
     /// ```opcode => xFx07```
-    fn set_vx_delay_timer(&mut self, opcode: u16) {
+    fn set_vx_delay_timer(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         self.v[vx] = self.delay_timer;
+        Ok(())
     }
 
     /// Wait for a key press, store the value of the key in Vx.
     ///
     /// ```opcode => 0xFx0A```
-    fn load_keypress_vx(&mut self, opcode: u16) {
+    fn load_keypress_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         for i in 0..self.keyboard.len() {
             if self.keyboard[i] != 0 {
                 self.v[vx] = i as u8;
-                return;
+                return Ok(())
             }
         }
         self.decrement_pc(); // if a key is not pressed decrement the pc to rerun the instruction.
+        Ok(())
     }
 
     /// Set the delay timer equal to Vx
     ///
     /// ```opcode => 0xFx15```
-    fn set_delay_timer_vx(&mut self, opcode: u16) {
+    fn set_delay_timer_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         self.delay_timer = self.v[vx];
+        Ok(())
     }
 
     /// Set the sound timer equal to Vx
     ///
     /// ```opcode => 0xFx18```
-    fn set_snd_timer_vx(&mut self, opcode: u16) {
+    fn set_snd_timer_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         self.sound_timer = self.v[vx];
+        Ok(())
     }
 
     /// add vx to the index register. I = I + Vx
     ///
     /// ```opcode => 0xFx1E```
-    fn add_idx_vx(&mut self, opcode: u16) {
+    fn add_idx_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         self.index += self.v[vx] as u16;
+        Ok(())
     }
 
     /// Sets the index register to the location of the start address of the Vx-th digit
@@ -338,17 +366,18 @@ impl Chip8CPU {
     /// Here it is assumed that vx is bounded to between 0-15 since there are 15 Chip-8 Character Sprites
     ///
     /// ```opcode -> 0xFx29```
-    fn set_idx_font_sprite_vx(&mut self, opcode: u16) {
+    fn set_idx_font_sprite_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let digit = self.v[vx];
 
         self.index = (START_ADDR as u16) + ((5 * digit) as u16);
+        Ok(())
     }
 
     /// Store the BCD representation of Vx into the addresses I, I+1, I + 2
     ///
     /// ```opcode => 0xFx33```
-    fn set_idx_bcd_vx(&mut self, opcode: u16) {
+    fn set_idx_bcd_vx(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let mut val = self.v[vx];
 
@@ -362,27 +391,31 @@ impl Chip8CPU {
 
         // Hundres Place
         self.memory[self.index as usize] = val % 10;
+
+        Ok(())
     }
 
     /// Load registers V0 through Vx in memory starting at memory address I up to I + X   
     ///
     /// ```opcode => 0xFx55```
-    fn write_x_registers(&mut self, opcode: u16) {
+    fn write_x_registers(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = (((opcode & 0x0F00) >> 8) as usize) + 1;
 
         for i in 0..vx {
             self.memory[self.index as usize + i] = self.v[i];
         }
+        Ok(())
     }
 
     /// Load memory locations I to I + X to registers V0 through Vx
     ///
     /// ```opcode => 0xFx65```
-    fn read_x_registers(&mut self, opcode: u16) {
+    fn read_x_registers(&mut self, opcode: u16)  -> Result<(), CycleError> {
         let vx = (((opcode & 0x0F00) >> 8) as usize)+1;// the plus 1 makes the loop inclusive
         for i in 0..vx {
             self.v[i] = self.memory[self.index as usize + i];
         }
+        Ok(())
     }
 
 }
@@ -582,13 +615,13 @@ mod tests {
         // Jump if v[1] == v[2]
         set_registers(&mut cpu, &[(1, x_val), (2, y_val)]);
         let opcode = 0x5120; // jump
-        cpu.skip_vx_vy_eq(opcode);
+        cpu.skip_vx_vy_eq(opcode).unwrap();
         assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
 
         println!("pc before {}", cpu.pc);
         set_registers(&mut cpu, &[(1, x_val), (2, x_val)]);
         let opcode = 0x5120; // jump
-        cpu.skip_vx_vy_eq(opcode);
+        cpu.skip_vx_vy_eq(opcode).unwrap();
         println!("pc after {}", cpu.pc);
 
         assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
@@ -598,20 +631,20 @@ mod tests {
         // Jump if v[1] == v[2]
         set_registers(&mut cpu, &[(1, x_val), (2, x_val)]);
         let opcode = 0x9120; // jump
-        cpu.skip_vx_vy_ne(opcode);
+        cpu.skip_vx_vy_ne(opcode).unwrap();
         assert_eq!(cpu.pc, START_ADDR as u16); // dont expect to jump
 
         set_registers(&mut cpu, &[(1, x_val), (2, y_val)]);
         let opcode = 0x9120; // jump
-        cpu.skip_vx_vy_ne(opcode);
-        assert_eq!(cpu.pc, (START_ADDR + 2) as u16); // expect to jump
+        cpu.skip_vx_vy_ne(opcode).unwrap();
+        assert_eq!(cpu.pc, (START_ADDR + 2) as u16) // expect to jump
     }
 
     #[test]
     fn index_register_test() {
         let mut cpu = Chip8CPU::new();
         let opcode = 0xA123;
-        cpu.set_i(opcode);
+        cpu.set_i(opcode).unwrap();
         assert_eq!(cpu.index, 0x123)
     }
 
@@ -681,7 +714,7 @@ mod tests {
     // uses array of (register idx, register val) to set register easily
     fn set_registers(cpu: &mut Chip8CPU, register_vals: &[(u8, u8)]) {
         for (register, val) in register_vals {
-            let opcode = (0x6000 | (*register as u16) << 8) | (*val as u16);
+            let opcode = (0x6000 | (*register as u16));
             cpu.set_vx(opcode);
         }
     }
