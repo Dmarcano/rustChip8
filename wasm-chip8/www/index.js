@@ -76,6 +76,7 @@ const emulate_cycle = (chip8) => {
 
 const emulation_loop = (chip8) => { 
     if(isRunning) { 
+        // run 9 cycles of the chip8 CPU before rendering the screen
         for(var i =0; i < 9; i++) {
             chip8.cycle(); 
         }
@@ -134,6 +135,17 @@ const create_rom_selection = () => {
     window.onload = () => sel_div.appendChild(sel_element);
     return sel_element; 
 }
+
+// CHIP-8 Keypad    User Keyboard
+// +-+-+-+-+        +-+-+-+-+
+// |1|2|3|C|        |1|2|3|4|
+// +-+-+-+-+        +-+-+-+-+
+// |4|5|6|D|        |Q|W|E|R|
+// +-+-+-+-+   <=   +-+-+-+-+
+// |7|8|9|E|        |A|S|D|F|
+// +-+-+-+-+        +-+-+-+-+
+// |A|0|B|F|        |Z|X|C|V|
+// +-+-+-+-+        +-+-+-+-+
 
 
 
