@@ -98,7 +98,10 @@ const emulation_loop = (chip8) => {
     if(isRunning) { 
         // run 9 cycles of the chip8 CPU before rendering the screen
         for(var i =0; i < 9; i++) {
-            chip8.cycle(); 
+            let no_err = chip8.cycle(); 
+            if(!no_err) { 
+                console.log(chip8.disassemble_memory())
+            }
         }
         update_canvas(chip8); 
 
