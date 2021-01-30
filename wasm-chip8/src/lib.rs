@@ -5,6 +5,8 @@ use chip8::Chip8CPU;
 use chip8::dissassembler::disassemble; 
 
 use js_sys::DataView; 
+use js_sys::Array;
+use web_sys::console;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -37,8 +39,17 @@ impl WasmChip8 {
         }
     }
 
-    pub fn cycle(&mut self) { 
-        self.cpu.cycle() 
+    pub fn cycle(&mut self) -> bool{ 
+        match self.cpu.cycle() { 
+            Ok(_) => {
+                true 
+            }
+            Err(err) => { 
+                console::error_1(&JsValue::from_str(err.message.as_str()));
+                console::log(&self.disassemble_memory());
+                false
+            }
+        }
     }
 
     pub fn reset(&mut self) { 
@@ -73,5 +84,28 @@ impl WasmChip8 {
 
     pub fn pc(&self) -> u16 { 
         self.cpu.pc() 
+    }
+
+    pub fn disassemble_memory(&self) -> Array { 
+
+        let start = self.pc() as usize; 
+        let mut end = start + 20; // grab at most 10 instructions
+        let memory = self.cpu.peek_memory(); 
+        // at most want to avoid overflowing the buffer
+        if end > memory.len() { 
+            end = memory.len();
+        }
+
+        // create an Array in JS to avoid serializing using Serde
+        let memory_arr = Array::new(); 
+
+        for i in (start..end).step_by(2) { 
+            let opcode : u16= ((memory[i] as u16) << 8 ) | memory[i+1] as u16; 
+            let instruction_str = format!("{:X}: {}", opcode, disassemble(opcode)); 
+            memory_arr.push(&JsValue::from_str(instruction_str.as_str()));
+            
+        }    
+
+        memory_arr
     }
 }
