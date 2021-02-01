@@ -9,7 +9,7 @@
   "scripts": {
     "build": "webpack --config webpack.config.js",
     "start": "webpack-dev-server",
-    "build-wasm": "curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh && cd .. && wasm-pack build && cd www && webpack --config webpack.config.js"
+    "build-wasm": "webpack --config webpack.config.js"
   },
   "repository": {
     "type": "git",
