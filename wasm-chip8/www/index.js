@@ -12,7 +12,7 @@ let isRunning = false;
 
 const CANVAS_COLOR = [255, 0, 0, 255];
 
-const ROMS = ["BC_test", "octojam2title", "danm8ku", "test_opcode", "snake" ]
+const ROMS = ["octojam2title", "PONG", "danm8ku", "TETRIS", "snake" , "TANK"]
 
 const main = () =>  { 
     let chip8 = wasm.WasmChip8.new(); 
