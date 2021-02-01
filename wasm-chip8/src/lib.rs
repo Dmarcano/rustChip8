@@ -86,6 +86,38 @@ impl WasmChip8 {
         self.cpu.pc() 
     }
 
+    pub fn get_registers(&self) -> Array { 
+
+        let register_arr = Array::new(); 
+
+        self.cpu.peek_register().iter().enumerate().for_each(|(i, register)| { 
+            let line = format!("v{}: {} ", i, register); 
+            register_arr.push(&JsValue::from_str(line.as_str())); 
+        });
+
+        register_arr.push(
+            &JsValue::from_str(format!("I: {}", self.cpu.get_index_register()).as_str())); 
+
+        register_arr
+    }
+
+    pub fn get_other_state(&self) -> Array { 
+
+        let state_arr = Array::new();
+        state_arr.push(
+            &JsValue::from_str(format!("pc: {}", self.cpu.pc()).as_str())); 
+
+        
+        state_arr.push(
+            &JsValue::from_str(format!("sound timer: {}", self.cpu.get_sound_timer()).as_str())); 
+
+        state_arr.push(
+            &JsValue::from_str(format!("delay timer: {}", self.cpu.get_delay_timer()).as_str())); 
+    
+    
+        state_arr
+    }
+
     pub fn disassemble_memory(&self) -> Array { 
 
         let start = self.pc() as usize; 
