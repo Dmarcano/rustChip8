@@ -423,6 +423,7 @@ impl Chip8CPU {
 mod tests {
 
     use super::*;
+    use super::super::START_ADDR;
 
     /// tests for simple setting and mutation of registers
     #[test]
