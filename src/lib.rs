@@ -107,7 +107,7 @@ impl Chip8CPU {
         let sound_timer = 0;
 
         // write the fontset into memory starting at 0x50
-        memory[0x50..0x50 + FONTSET.len()].copy_from_slice(&FONTSET);
+        memory[0..FONTSET.len()].clone_from_slice(&FONTSET[..]);
 
         let opcode_table = Chip8CPU::create_function_table(); 
 
@@ -317,6 +317,6 @@ mod tests {
     }
 
     fn check_fontset(arr: &[u8]) {
-        assert_eq!(&arr[0x50..0x50 + FONTSET.len()], &FONTSET[..])
+        assert_eq!(&arr[.. FONTSET.len()], &FONTSET[..])
     }
 }

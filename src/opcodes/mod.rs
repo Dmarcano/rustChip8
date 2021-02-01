@@ -369,7 +369,7 @@ impl Chip8CPU {
         let vx = ((opcode & 0x0F00) >> 8) as usize;
         let digit = self.v[vx];
 
-        self.index = (START_ADDR as u16) + ((5 * digit) as u16);
+        self.index = (5 * digit) as u16;
         Ok(())
     }
 
