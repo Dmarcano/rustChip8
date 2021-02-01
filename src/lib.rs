@@ -188,7 +188,7 @@ impl Chip8CPU {
 
     /// Returns a reference to the main meory. Meant to be used for debugging the CPU
     /// or displaying state without the overhead of cloning.
-    pub fn peek_memory<(&self) -> &[u8] { 
+    pub fn peek_memory(&self) -> &[u8] { 
         &self.memory
     }
 
