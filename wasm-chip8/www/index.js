@@ -201,16 +201,13 @@ const get_rom_file = async(name) => {
 }
 
 const create_rom_selection = () => { 
-    const sel_element = document.createElement('select');
-    const sel_div = document.getElementById('rom-select');
-    sel_element.name = "rom_drop"
-    sel_element.id = "rom-select"
+    const sel_element = document.getElementById('rom-select');
+   
 
     const rom_select = ROMS.map(rom => {
         return `<option value="${rom}">${rom}</option>`;
     });
     sel_element.innerHTML = rom_select;
-    window.onload = () => sel_div.appendChild(sel_element);
     return sel_element; 
 }
 
