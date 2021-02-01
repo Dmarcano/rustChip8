@@ -81,6 +81,8 @@ const main = () =>  {
     get_rom_file(default_rom).then((rom) => { 
         chip8.reset();
         chip8.load_rom_js(rom); 
+        update_memory(chip8);
+
         update_canvas(chip8);
 
         emulation_loop(chip8);
@@ -90,6 +92,7 @@ const main = () =>  {
 
 const emulate_cycle = (chip8) => { 
     chip8.cycle(); 
+    update_memory(chip8);
     update_canvas(chip8); 
 }
 
@@ -99,6 +102,7 @@ const emulation_loop = (chip8) => {
         // run 9 cycles of the chip8 CPU before rendering the screen
         for(var i =0; i < 9; i++) {
             let no_err = chip8.cycle(); 
+            update_memory(chip8);
             if(!no_err) { 
                 console.log(chip8.disassemble_memory())
             }
@@ -137,6 +141,22 @@ const update_canvas = (chip8) => {
         }
     }
     ctx.putImageData(image, 0, 0);
+}
+
+const update_memory = (chip8) => { 
+    // get an <ul> element
+    let ul = document.getElementById("memory_list");
+    ul.innerHTML = ''
+
+    let memory = chip8.disassemble_memory();
+    let pc = chip8.pc();
+
+
+    memory.forEach(instruction => { 
+        let li = document.createElement('li'); 
+        li.innerHTML = instruction; 
+        ul.appendChild(li); 
+    })
 }
 
 const get_rom_file = async(name) => { 

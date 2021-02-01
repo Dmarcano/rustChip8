@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title> wasm-chip8!</title>
+    <link href="https://fonts.googleapis.com/css?family=VT323&display=swap" rel="stylesheet">
     <style>
       canvas {
           image-rendering: -moz-crisp-edges;
@@ -11,6 +12,14 @@
           image-rendering: crisp-edges;
           position: relative;
        }
+
+       body {
+       background: #eaeaea;
+       font-family: 'VT323', monospace;
+       font-size: 20px;
+
+     }
+
 
       .content {
           background: #eaeaea;
@@ -31,6 +40,14 @@
        justify-content: center;
        padding: 10px;
       }
+
+      header {
+       grid-column: 1 / span 3;
+       display: flex;
+       font-family: 'Roboto Slab', serif;
+     }
+
+
   </style>
   </head>
   <body>
@@ -41,12 +58,32 @@
 
     <div class="content">
 
+      <header>
+        <div class ="background">
+
+          <h2>Chip8 Emulator</h2>
+
+          <p>A WebAssembly implementation of the <a href="https://en.wikipedia.org/wiki/CHIP-8"> Chip8 </a> using Rust. Click the start button to play the current 
+          ROM or select the ROM from the dropdown. 
+          </p>
+        </div>
+      </header>
+
       
         <div class="display">
           <canvas id="chip8-canvas" width="64" height="32" style="transform: scale(8); transform-origin: top left;"></canvas>
         </div>
 
-        <div id= "placeholder"></div>
+        <div>
+          <p>
+            Chip8 Main Memory
+          </p>
+
+          <div  id= "memory">
+            <ul id="memory_list">
+            </ul>
+          </div>
+        </div>
 
 
       <div class="controls">

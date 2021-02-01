@@ -101,7 +101,7 @@ impl WasmChip8 {
 
         for i in (start..end).step_by(2) { 
             let opcode : u16= ((memory[i] as u16) << 8 ) | memory[i+1] as u16; 
-            let instruction_str = format!("{:X}: {}", opcode, disassemble(opcode)); 
+            let instruction_str = format!("0x{} {:X}: {}", i, opcode, disassemble(opcode)); 
             memory_arr.push(&JsValue::from_str(instruction_str.as_str()));
             
         }    
