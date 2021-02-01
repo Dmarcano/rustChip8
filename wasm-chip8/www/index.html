@@ -76,20 +76,33 @@
       </header>
 
       
+
+      
         <div class="display">
           <canvas id="chip8-canvas" width="64" height="32" style="transform: scale(8); transform-origin: top left;"></canvas>
         </div>
+
+        <div class="controls">
+          <div id= "rom-select"></div>
+    
+            <button id = "start-chip8">start</button>
+            <button id="forward-chip8" >1 step</button>
+            <button id = "stop-chip8">stop</button>
+          </div>
 
         <div>
           <p>
             Chip8 Main Memory
           </p>
 
+          
+
           <div  id= "memory">
             <ul class="memory_list" id="memory_list">
             </ul>
           </div>
         </div>
+        
 
         <div>
           <p>Registers</p>
@@ -107,13 +120,7 @@
 
 
 
-      <div class="controls">
-      <div id= "rom-select"></div>
-
-        <button id = "start-chip8">start</button>
-        <button id="forward-chip8" >1 step</button>
-        <button id = "stop-chip8">stop</button>
-      </div>
+      
 
     </div>
 
