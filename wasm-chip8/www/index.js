@@ -32,6 +32,8 @@ const main = () =>  {
         get_rom_file(file_extension).then(rom => {
             chip8.reset();
             chip8.load_rom_js(rom);
+            update_memory(chip8);
+
             update_canvas(chip8);
         });
     });
