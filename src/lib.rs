@@ -182,13 +182,13 @@ impl Chip8CPU {
     }
 
     /// Return a reference to the display buffer. Meant to be used for the sole purpose of displaying graphics.
-    pub fn peek_display_buffer<'a>(&'a self) -> &'a [u8; 32*64] { 
-        & self.disp_buf
+    pub fn peek_display_buffer(&self) -> &[u8] { 
+        &self.disp_buf
     }    
 
     /// Returns a reference to the main meory. Meant to be used for debugging the CPU
     /// or displaying state without the overhead of cloning.
-    pub fn peek_memory<'a>(&'a self) -> &'a [u8; 4096] { 
+    pub fn peek_memory<(&self) -> &[u8] { 
         &self.memory
     }
 
