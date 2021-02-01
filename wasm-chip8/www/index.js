@@ -33,7 +33,7 @@ const main = () =>  {
             chip8.reset();
             chip8.load_rom_js(rom);
             update_memory(chip8);
-
+            // update_state_ui(chip8);
             update_canvas(chip8);
         });
     });
@@ -84,6 +84,7 @@ const main = () =>  {
         chip8.reset();
         chip8.load_rom_js(rom); 
         update_memory(chip8);
+        // update_state_ui(chip8);
 
         update_canvas(chip8);
 
@@ -95,6 +96,7 @@ const main = () =>  {
 const emulate_cycle = (chip8) => { 
     chip8.cycle(); 
     update_memory(chip8);
+    // update_state_ui(chip8);
     update_canvas(chip8); 
 }
 
@@ -105,6 +107,7 @@ const emulation_loop = (chip8) => {
         for(var i =0; i < 9; i++) {
             let no_err = chip8.cycle(); 
             update_memory(chip8);
+            // update_state_ui(chip8);
             if(!no_err) { 
                 console.log(chip8.disassemble_memory())
             }
@@ -151,8 +154,6 @@ const update_memory = (chip8) => {
     ul.innerHTML = ''
 
     let memory = chip8.disassemble_memory();
-    let pc = chip8.pc();
-
 
     memory.forEach(instruction => { 
         let li = document.createElement('li'); 
@@ -160,6 +161,38 @@ const update_memory = (chip8) => {
         ul.appendChild(li); 
     })
 }
+
+const update_state_ui = (chip8) => { 
+
+    // Update the register list <ul> element
+    let register_list = document.getElementById("register_list");
+    // clear the element of old list elements by removing the inner html
+    register_list.innerHTML = ''
+
+    let registers = chip8.get_registers();
+    // Apply each string to
+    registers.forEach(register => { 
+        let li = document.createElement('li'); 
+        li.innerHTML = register; 
+        register_list.appendChild(li); 
+    })
+
+     // Update the other state list <ul> element
+     let state_list = document.getElementById("other_state_list");
+     // clear the element of old list elements by removing the inner html
+     state_list.innerHTML = ''
+ 
+     let other_state = chip8.get_other_state();
+     // Apply each string to
+     other_state.forEach(register => { 
+         let li = document.createElement('li'); 
+         li.innerHTML = register; 
+         state_list.appendChild(li); 
+     })
+
+}
+
+
 
 const get_rom_file = async(name) => { 
     let file = await fetch(`roms/${name}`); 
