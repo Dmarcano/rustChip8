@@ -1,4 +1,4 @@
-use super::{Chip8CPU, SPRITE_WIDTH, START_ADDR, VIDEO_HEIGHT, VIDEO_WIDTH};
+use super::{Chip8CPU, SPRITE_WIDTH, VIDEO_HEIGHT, VIDEO_WIDTH};
 
 pub(crate) mod function_table;
 use super::cycle_error::CycleError;
