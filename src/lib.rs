@@ -202,16 +202,38 @@ impl Chip8CPU {
         self.memory.clone()
     }
 
-    /// clones the cpu's registers should their state be needed for display or debugging purposes
+    /// clones the Chip8's 16 general purpose registers should their state be needed for display or debugging purposes
     pub fn clone_registers(&self) -> [u8; 16] { 
         self.v.clone()
     }
+
+    /// get a reference of the Chip8's 16 general purpose registers should their state be needed for display or debugging purposes
+    pub fn peek_register(&self) -> &[u8] { 
+        &self.v
+    }
+
+    /// get the value of the Chip8's index register should its state be needed for display or debugging pruposes
+    pub fn get_index_register(&self) -> u16 { 
+        self.index
+    }
+
+    /// get the value of the Chip8's delay timer should it be needed for display or debugging purpses 
+    pub fn get_delay_timer(&self) -> u8 { 
+        self.delay_timer
+    }
+
+    /// get the value of the Chip8's delay timer should it be needed for display or debugging purpses 
+    pub fn get_sound_timer(&self) ->u8 { 
+        self.sound_timer
+    }
+
 
     /// clones the cpu's keyboard should their state be needed for display or debugging
     pub fn clone_keyboard(&self) -> [u8; 16] { 
         self.keyboard.clone()   
     }
 
+    /// get the value of the Chip8's program counter should it be needed for display or debugging purposes
     pub fn pc(&self) -> u16 { 
         self.pc 
     }
