@@ -12,12 +12,12 @@ let isRunning = false;
 
 const CANVAS_COLOR = [255, 0, 0, 255];
 
-const ROMS = ["octojam2title", "PONG", "danm8ku", "TETRIS", "snake" , "TANK"]
+const ROMS = ["snake" , "octojam2title", "PONG", "danm8ku", "TETRIS", "TANK"]
 
 const main = () =>  { 
     let chip8 = wasm.WasmChip8.new(); 
     console.log(chip8)
-    let default_rom = "octojam2title.ch8";
+    let default_rom = "snake.ch8";
     
     const forward_btn = document.getElementById('forward-chip8');
     const start_btn = document.getElementById('start-chip8');
