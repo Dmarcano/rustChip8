@@ -2,6 +2,8 @@
 
 ## [Demo here](https://www.wasmchip8.diegomarcano.dev).
 
+![](public/chip8_screenshot.png)
+
 This project is a [Chip-8](https://en.wikipedia.org/wiki/CHIP-8) Interpreter written in Rust as an excercise to learn how to use WebAssembly. Most of the ROMS are taking from [this archive](https://johnearnest.github.io/chip8Archive/) 
 
 The Chip-8 is considered a rite of passage project for many devs looking into creating emulators. If you're interested I suggest you give it a try! 
