@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="viewport"  content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=3">
     <title> wasm-chip8!</title>
     <link href="https://fonts.googleapis.com/css?family=VT323&display=swap" rel="stylesheet">
     <style>
@@ -20,6 +21,9 @@
 
      }
 
+     html {
+  touch-action: manipulation;
+}
 
       .content {
           background: #eaeaea;
@@ -51,6 +55,34 @@
        list-style: none;
        margin: 0;
        padding: 0;
+     }
+
+     .keypad { 
+      grid-column: 1 / span 3;
+       
+     }
+
+     .keypad_row { 
+       display: flex;
+       flex-direction: row;
+       justify-content: space-evenly;
+
+       
+     }
+
+
+     .keypad_row > button  { 
+       border: none;
+       font-size: 32px;
+       text-align: center;
+       padding: 10px 10px;
+       text-decoration:none;
+     }
+
+     .keypad_row > button:active  { 
+
+       background-color: #ce0a0a;
+       
      }
 
 
@@ -90,12 +122,46 @@
             <button id = "start-chip8">start</button>
             <button id="forward-chip8" >1 step</button>
             <button id = "stop-chip8">stop</button>
+            <button id = "debug">debug</button>
+          </div>
+
+
+          <div class = "keypad">
+            <div class="keypad_row">
+              <button>1</button>
+              <button>2</button>
+              <button>3</button>
+              <button>4</button>
+            </div>
+
+            <div class="keypad_row">
+              <button>Q</button>
+              <button>W</button>
+              <button>E</button>
+              <button>R</button>
+            </div>
+
+            <div class="keypad_row">
+              <button>A</button>
+              <button>S</button>
+              <button>D</button>
+              <button>F</button>
+            </div>
+
+            <div class="keypad_row">
+              <button>Z</button>
+              <button>X</button>
+              <button>C</button>
+              <button>V</button>
+            </div>
           </div>
 
         <div>
           <p>
             Chip8 Main Memory
           </p>
+
+          
 
           
 
@@ -119,10 +185,6 @@
 
         
 
-
-
-
-      
 
     </div>
 
