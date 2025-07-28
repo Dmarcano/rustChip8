@@ -1,5 +1,6 @@
 {
   "name": "wasm-chip8",
+  "type": "module",
   "collaborators": [
     "Dmarcano <dmarcan1@swarthmore.edu>"
   ],
@@ -7,9 +8,13 @@
   "files": [
     "wasm_chip8_bg.wasm",
     "wasm_chip8.js",
+    "wasm_chip8_bg.js",
     "wasm_chip8.d.ts"
   ],
-  "module": "wasm_chip8.js",
+  "main": "wasm_chip8.js",
   "types": "wasm_chip8.d.ts",
-  "sideEffects": false
+  "sideEffects": [
+    "./wasm_chip8.js",
+    "./snippets/*"
+  ]
 }

@@ -259,7 +259,7 @@ impl Chip8CPU {
     }
 
     fn random_byte(&mut self) -> u8 {
-        self.rng.gen::<u8>()
+        self.rng.r#gen::<u8>()
     }
 
     // each opcode is 2 bytes and the PC is indexed by 1 byte.

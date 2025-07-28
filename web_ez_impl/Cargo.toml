@@ -1,0 +1,10 @@
+[package]
+name = "web_ez_impl"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chip8 = {path = "../."}
+good-web-game = "0.6.1"
+miniquad = "=0.3.13"
+cgmath = { version = "0.17", features = ["mint"] }
