@@ -45,6 +45,7 @@ impl MainState {
         let file_name = "roms/test_opcode.ch8";
         
         let file_name = "roms/4-flags.ch8";
+        let file_name = "roms/3-corax+.ch8";
         
         
         let mut cpu = Chip8CPU::new();

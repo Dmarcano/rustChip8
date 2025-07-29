@@ -134,33 +134,39 @@ impl Chip8CPU {
 
         let instruction = (opcode & 0x000F) as u8;
 
+        // Read operand values before any flags are set to prevent early flag corruption
+        let vx_val = self.v[vx];
+        let vy_val = self.v[vy];
+
         match instruction {
-            0 => self.v[vx] = self.v[vy],
-            1 => self.v[vx] |= self.v[vy],
-            2 => self.v[vx] &= self.v[vy],
-            3 => self.v[vx] ^= self.v[vy],
+            0 => self.v[vx] = vy_val,
+            1 => self.v[vx] = vx_val | vy_val,
+            2 => self.v[vx] = vx_val & vy_val,
+            3 => self.v[vx] = vx_val ^ vy_val,
             4 => {
-                let (sum, of) = self.v[vx].overflowing_add(self.v[vy]);
-                self.v[0xF] = of as u8;
+                let (sum, of) = vx_val.overflowing_add(vy_val);
                 self.v[vx] = sum;
+                self.v[0xF] = of as u8;
             }
             5 => {
-                let (sum, of) = self.v[vx].overflowing_sub(self.v[vy]);
-                self.v[0xF] = (!of) as u8; // set flag if vx > vy or no overflow occurs
-                self.v[vx] = sum;
+                let (diff, of) = vx_val.overflowing_sub(vy_val);
+                self.v[vx] = diff;
+                self.v[0xF] = (!of) as u8; // set flag if vx >= vy (no borrow)
             }
             6 => {
-                self.v[0xF] = self.v[vx] & 0x1;
-                self.v[vx] >>= 1;
+                let shifted_bit = vx_val & 0x1;
+                self.v[vx] = vx_val >> 1;
+                self.v[0xF] = shifted_bit;
             }
             7 => {
-                let (sum, of) = self.v[vx].overflowing_sub(self.v[vy]);
-                self.v[0xF] = of as u8;
-                self.v[vx] = sum;
+                let (diff, of) = vy_val.overflowing_sub(vx_val);
+                self.v[vx] = diff;
+                self.v[0xF] = (!of) as u8; // set flag if vy >= vx (no borrow)
             }
             0xE => {
-                self.v[0xF] = (self.v[vx] & 0x80) >> 7;
-                self.v[vx] <<= 1;
+                let shifted_bit = (vx_val & 0x80) >> 7;
+                self.v[vx] = vx_val << 1;
+                self.v[0xF] = shifted_bit;
             }
             _ => {
                 return Err(CycleError{
@@ -553,20 +559,20 @@ mod tests {
         assert_eq!(cpu.v[1], expected);
         assert_eq!(cpu.v[0xF], 0);
 
-        // Subtract registers no overflow with VF expected to be set to 0 since X < Y
+        // SUBN (subtract no borrow): V1 = V2 - V1, with VF expected to be set to 0 since V2 < V1
         set_registers(&mut cpu, &[(1, x_val), (2, y_val)]);
-        opcode = 0x8127; // subtract no borrow
+        opcode = 0x8127; // SUBN V1, V2 (V1 = V2 - V1)
         cpu.set_vx_vy(opcode).unwrap();
-        let expected = x_val - y_val;
+        let (expected, _) = u8::overflowing_sub(y_val, x_val); // y_val - x_val
         assert_eq!(cpu.v[1], expected);
-        assert_eq!(cpu.v[0xF], 0);
-        // Subtract registers with overflow with VF expected to be set to 0 since X > Y
+        assert_eq!(cpu.v[0xF], 0); // VF should be 0 since V2 < V1 (borrow occurred)
+        // SUBN with no borrow: V1 = V2 - V1, with VF expected to be set to 1 since V2 > V1
         set_registers(&mut cpu, &[(1, 0x01), (2, y_val)]);
-        opcode = 0x8127;
+        opcode = 0x8127; // SUBN V1, V2 (V1 = V2 - V1)
         cpu.set_vx_vy(opcode).unwrap();
-        let (expected, _) = u8::overflowing_sub(0x01, y_val); // 0x01.overflowing_sub(y_val);
+        let (expected, _) = u8::overflowing_sub(y_val, 0x01); // y_val - 0x01
         assert_eq!(cpu.v[1], expected);
-        assert_eq!(cpu.v[0xF], 1);
+        assert_eq!(cpu.v[0xF], 1); // VF should be 1 since V2 > V1 (no borrow)
     }
 
     /// Testing of the Chip-8 CPU's ability to perform shifting instructions
@@ -717,5 +723,146 @@ mod tests {
             let opcode = (0x6000 | (*register as u16) << 8) | (*val as u16);
             cpu.set_vx(opcode).unwrap();
         }
+    }
+
+    /// Comprehensive flag tests based on Timendus CHIP-8 test suite
+    /// Tests critical flag register (VF) behavior for various opcodes
+    #[test]
+    fn flags_test_bitwise_operations() {
+        let mut cpu = Chip8CPU::new();
+        
+        // Test 8xy1 (OR) - VF should not be affected by bitwise operations
+        set_registers(&mut cpu, &[(0xF, 1)]); // Pre-set VF to 1
+        set_registers(&mut cpu, &[(1, 0xAA), (2, 0x55)]);
+        cpu.set_vx_vy(0x8121).unwrap(); // OR V1, V2
+        assert_eq!(cpu.v[1], 0xFF);
+        // VF should remain unchanged by OR operation
+        assert_eq!(cpu.v[0xF], 1, "VF should not be modified by OR operation");
+        
+        // Test 8xy2 (AND) - VF should not be affected
+        cpu.reset();
+        set_registers(&mut cpu, &[(0xF, 1)]); // Pre-set VF to 1
+        set_registers(&mut cpu, &[(1, 0xAA), (2, 0x55)]);
+        cpu.set_vx_vy(0x8122).unwrap(); // AND V1, V2
+        assert_eq!(cpu.v[1], 0x00);
+        assert_eq!(cpu.v[0xF], 1, "VF should not be modified by AND operation");
+        
+        // Test 8xy3 (XOR) - VF should not be affected
+        cpu.reset();
+        set_registers(&mut cpu, &[(0xF, 1)]); // Pre-set VF to 1
+        set_registers(&mut cpu, &[(1, 0xAA), (2, 0x55)]);
+        cpu.set_vx_vy(0x8123).unwrap(); // XOR V1, V2
+        assert_eq!(cpu.v[1], 0xFF);
+        assert_eq!(cpu.v[0xF], 1, "VF should not be modified by XOR operation");
+    }
+
+    #[test]
+    fn flags_test_vf_as_operand() {
+        let mut cpu = Chip8CPU::new();
+        
+        // Test using VF as both operand and result register for ADD
+        set_registers(&mut cpu, &[(0xF, 0x0A), (1, 0x05)]);
+        cpu.set_vx_vy(0x8F14).unwrap(); // ADD VF, V1 (VF = VF + V1)
+        assert_eq!(cpu.v[0xF], 0, "VF should be set to 0 (no carry) after ADD operation");
+        
+        // Test VF as operand with overflow
+        set_registers(&mut cpu, &[(0xF, 0xFF), (1, 0x01)]);
+        cpu.set_vx_vy(0x8F14).unwrap(); // ADD VF, V1 (causes overflow)
+        assert_eq!(cpu.v[0xF], 1, "VF should be set to 1 (carry) after overflow");
+        
+        // Test using VF as Y operand in SUB
+        set_registers(&mut cpu, &[(1, 0x10), (0xF, 0x05)]);
+        cpu.set_vx_vy(0x81F5).unwrap(); // SUB V1, VF (V1 = V1 - VF)
+        assert_eq!(cpu.v[1], 0x0B);
+        assert_eq!(cpu.v[0xF], 1, "VF should be set to 1 (no borrow) since V1 > VF");
+        
+        // Test using VF as X operand in SUB
+        set_registers(&mut cpu, &[(0xF, 0x05), (1, 0x10)]);
+        cpu.set_vx_vy(0x8F15).unwrap(); // SUB VF, V1 (VF = VF - V1)
+        assert_eq!(cpu.v[0xF], 0, "VF should be set to 0 (borrow occurred) since original VF < V1");
+    }
+
+    #[test]
+    fn flags_test_shifting_operations() {
+        let mut cpu = Chip8CPU::new();
+        
+        // Test 8xy6 (SHR) - shift right, LSB goes to VF
+        set_registers(&mut cpu, &[(1, 0x81)]); // Binary: 10000001
+        cpu.set_vx_vy(0x8106).unwrap(); // SHR V1
+        assert_eq!(cpu.v[1], 0x40); // Binary: 01000000
+        assert_eq!(cpu.v[0xF], 1, "VF should contain the shifted-out LSB (1)");
+        
+        // Test SHR with LSB = 0
+        set_registers(&mut cpu, &[(1, 0x80)]); // Binary: 10000000
+        cpu.set_vx_vy(0x8106).unwrap(); // SHR V1
+        assert_eq!(cpu.v[1], 0x40); // Binary: 01000000
+        assert_eq!(cpu.v[0xF], 0, "VF should contain the shifted-out LSB (0)");
+        
+        // Test 8xyE (SHL) - shift left, MSB goes to VF
+        set_registers(&mut cpu, &[(1, 0x81)]); // Binary: 10000001
+        cpu.set_vx_vy(0x810E).unwrap(); // SHL V1
+        assert_eq!(cpu.v[1], 0x02); // Binary: 00000010 (with overflow)
+        assert_eq!(cpu.v[0xF], 1, "VF should contain the shifted-out MSB (1)");
+        
+        // Test SHL with MSB = 0
+        set_registers(&mut cpu, &[(1, 0x01)]); // Binary: 00000001
+        cpu.set_vx_vy(0x810E).unwrap(); // SHL V1
+        assert_eq!(cpu.v[1], 0x02); // Binary: 00000010
+        assert_eq!(cpu.v[0xF], 0, "VF should contain the shifted-out MSB (0)");
+    }
+
+    #[test]
+    fn flags_test_vf_as_shift_operand() {
+        let mut cpu = Chip8CPU::new();
+        
+        // Test shifting VF itself (SHR)
+        set_registers(&mut cpu, &[(0xF, 0xFF)]); // VF = 11111111
+        cpu.set_vx_vy(0x8FF6).unwrap(); // SHR VF
+        assert_eq!(cpu.v[0xF], 1, "VF should be set to the shifted-out bit (1)");
+        
+        // Test shifting VF itself (SHL)
+        set_registers(&mut cpu, &[(0xF, 0xFF)]); // VF = 11111111
+        cpu.set_vx_vy(0x8FFE).unwrap(); // SHL VF
+        assert_eq!(cpu.v[0xF], 1, "VF should be set to the shifted-out bit (1)");
+    }
+
+    #[test]
+    fn flags_test_subtraction_edge_cases() {
+        let mut cpu = Chip8CPU::new();
+        
+        // Test SUBN (8xy7) - VF should be set based on Vy > Vx
+        set_registers(&mut cpu, &[(1, 0x05), (2, 0x10)]);
+        cpu.set_vx_vy(0x8127).unwrap(); // SUBN V1, V2 (V1 = V2 - V1)
+        assert_eq!(cpu.v[1], 0x0B); // 0x10 - 0x05 = 0x0B
+        assert_eq!(cpu.v[0xF], 1, "VF should be 1 since V2 > V1 (no borrow)");
+        
+        // Test SUBN with borrow
+        set_registers(&mut cpu, &[(1, 0x10), (2, 0x05)]);
+        cpu.set_vx_vy(0x8127).unwrap(); // SUBN V1, V2 (V1 = V2 - V1)
+        let (expected, _) = u8::overflowing_sub(0x05, 0x10);
+        assert_eq!(cpu.v[1], expected);
+        assert_eq!(cpu.v[0xF], 0, "VF should be 0 since V2 < V1 (borrow occurred)");
+    }
+
+    #[test] 
+    fn flags_test_early_flag_setting_prevention() {
+        let mut cpu = Chip8CPU::new();
+        
+        // This test ensures VF is not set "too early" during operations
+        // Set VF as an operand and ensure it's used before being overwritten
+        set_registers(&mut cpu, &[(0xF, 0x02), (1, 0xFF)]);
+        cpu.set_vx_vy(0x8F14).unwrap(); // ADD VF, V1 (VF + V1 should cause overflow)
+        
+        // The operation should be: 0x02 + 0xFF = 0x101 (with carry/overflow)
+        // VF should be set to 1 due to the carry, not remain as 0x02
+        assert_eq!(cpu.v[0xF], 1, "VF should be set to carry flag (1), not retain original value");
+        
+        // Similar test for subtraction
+        set_registers(&mut cpu, &[(0xF, 0x01), (1, 0x05)]);
+        cpu.set_vx_vy(0x8F15).unwrap(); // SUB VF, V1 (VF - V1)
+        
+        // The operation should be: 0x01 - 0x05 (with borrow)
+        // VF should be set to 0 due to borrow, not remain as original value
+        assert_eq!(cpu.v[0xF], 0, "VF should be set to borrow flag (0), not retain original value");
     }
 }
