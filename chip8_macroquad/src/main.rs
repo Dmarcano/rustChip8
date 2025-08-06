@@ -1,40 +1,52 @@
+use std::collections::HashSet;
+
 use chip8::Chip8CPU;
-use macroquad::color::{Color, colors};
+use macroquad::color::colors;
 use macroquad::prelude::*;
-
-const VIDEO_WIDTH: u32 = 64;
-const VIDEO_HEIGHT: u32 = 32;
-// This is the pixel width in our screen that corresponds to one chip8 pixel
-const PIXEL_WIDTH: u32 = 8;
-
-const GRID_CELL_SIZE: (u32, u32) = (PIXEL_WIDTH, PIXEL_WIDTH);
-
-const SCREEN_SIZE: (i32, i32) = (
-    (VIDEO_WIDTH * GRID_CELL_SIZE.0) as i32,
-    (VIDEO_HEIGHT * GRID_CELL_SIZE.1) as i32,
-);
 
 struct Chip8Emulator {
     cpu: Chip8CPU,
+    texture: Texture2D,
+    image: Image,
 }
 
-#[macroquad::main("Chip8 Emulator")]
-async fn main() {
-    let mut image = Image::gen_image_color(64, 32, colors::WHITE);
-    let texture = Texture2D::from_image(&image);
-    texture.set_filter(FilterMode::Nearest);
+// CHIP-8 Keypad    User Keyboard
+// +-+-+-+-+        +-+-+-+-+
+// |1|2|3|C|        |1|2|3|4|
+// +-+-+-+-+        +-+-+-+-+
+// |4|5|6|D|        |Q|W|E|R|
+// +-+-+-+-+   <=   +-+-+-+-+
+// |7|8|9|E|        |A|S|D|F|
+// +-+-+-+-+        +-+-+-+-+
+// |A|0|B|F|        |Z|X|C|V|
+// +-+-+-+-+        +-+-+-+-+
 
-    let file_name = "roms/3-corax+.ch8";
+// const CHIP8_KEYBOARD = {
+//   // KEYBOARD
+//   1: 0x1,
+//   2: 0x2,
+//   3: 0x3,
+//   4: 0xc,
 
-    let mut cpu = Chip8CPU::new();
+//   q: 0x4,
+//   w: 0x5,
+//   e: 0x6,
+//   r: 0xd,
 
-    cpu.load_rom_from_file(String::from(file_name));
+//   a: 0x7,
+//   s: 0x8,
+//   d: 0x9,
+//   f: 0xe,
 
-    let mut emulator = Chip8Emulator { cpu };
+//   z: 0xa,
+//   x: 0x0,
+//   c: 0xb,
+//   v: 0xf,
+// };
 
-    loop {
-        clear_background(BLACK);
-
+impl Chip8Emulator {
+    pub fn draw(&mut self) {
+        let emulator = self;
         let screen_buffer = emulator.cpu.peek_display_buffer();
 
         for (i, &pixel) in screen_buffer.iter().enumerate() {
@@ -45,29 +57,118 @@ async fn main() {
             } else {
                 colors::BLACK
             };
-            image.set_pixel(x, y, color);
+            emulator.image.set_pixel(x, y, color);
         }
 
-        texture.update(&image);
+        emulator.texture.update(&emulator.image);
 
         draw_texture_ex(
-            &texture,
-            0.,
+            &emulator.texture,
+            screen_width() / 4.0,
             0.,
             WHITE,
             DrawTextureParams {
-                dest_size: Some(vec2(screen_width(), screen_height())),
+                dest_size: Some(vec2(screen_width() / 2.0, screen_height() / 2.0)),
                 ..Default::default()
             },
         );
+    }
 
-        let _ = emulator.cpu.cycle();
+    pub fn key_presses(&mut self, keys: HashSet<KeyCode>) {
+        // Clear all keys first
+        for i in 0..16 {
+            self.cpu.set_keyboard(i, 0);
+        }
 
-        // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
-        // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
-        // draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
+        // Set pressed keys
+        for key in keys {
+            self.key_press(key);
+        }
+    }
 
-        // draw_text("IT WORKS!", 20.0, 20.0, 30.0, DARKGRAY);
+    pub fn key_press(&mut self, key: KeyCode) {
+        if let Some(chip8_key) = self.keycode_to_chip8(key) {
+            self.cpu.set_keyboard(chip8_key, 1);
+        }
+    }
+
+    /// Maps Macroquad KeyCode to CHIP-8 keypad values
+    /// Based on the standard CHIP-8 keyboard layout:
+    /// CHIP-8 Keypad    User Keyboard
+    /// +-+-+-+-+        +-+-+-+-+
+    /// |1|2|3|C|        |1|2|3|4|
+    /// +-+-+-+-+        +-+-+-+-+
+    /// |4|5|6|D|        |Q|W|E|R|
+    /// +-+-+-+-+   <=   +-+-+-+-+
+    /// |7|8|9|E|        |A|S|D|F|
+    /// +-+-+-+-+        +-+-+-+-+
+    /// |A|0|B|F|        |Z|X|C|V|
+    /// +-+-+-+-+        +-+-+-+-+
+    fn keycode_to_chip8(&self, key: KeyCode) -> Option<u8> {
+        match key {
+            // Top row: 1,2,3,C
+            KeyCode::Key1 => Some(0x1),
+            KeyCode::Key2 => Some(0x2),
+            KeyCode::Key3 => Some(0x3),
+            KeyCode::Key4 => Some(0xC),
+
+            // Second row: 4,5,6,D
+            KeyCode::Q => Some(0x4),
+            KeyCode::W => Some(0x5),
+            KeyCode::E => Some(0x6),
+            KeyCode::R => Some(0xD),
+
+            // Third row: 7,8,9,E
+            KeyCode::A => Some(0x7),
+            KeyCode::S => Some(0x8),
+            KeyCode::D => Some(0x9),
+            KeyCode::F => Some(0xE),
+
+            // Bottom row: A,0,B,F
+            KeyCode::Z => Some(0xA),
+            KeyCode::X => Some(0x0),
+            KeyCode::C => Some(0xB),
+            KeyCode::V => Some(0xF),
+
+            _ => None,
+        }
+    }
+}
+
+#[macroquad::main("Chip8 Emulator")]
+async fn main() {
+    let image = Image::gen_image_color(64, 32, colors::WHITE);
+    let texture = Texture2D::from_image(&image);
+    texture.set_filter(FilterMode::Nearest);
+
+    let file_name = "roms/snake.ch8";
+    // let file_name = "roms/3-corax+.ch8";
+
+    let mut cpu = Chip8CPU::new();
+
+    cpu.load_rom_from_file(String::from(file_name));
+
+    let mut emulator = Chip8Emulator {
+        cpu,
+        texture,
+        image,
+    };
+
+
+    loop {
+        clear_background(BLUE);
+
+        emulator.draw();
+
+        draw_fps();
+
+        // Handle keyboard input - get all currently pressed keys
+        let pressed_keys = get_keys_down();
+        emulator.key_presses(pressed_keys);
+
+        for _ in 0..8 {
+            let _ = emulator.cpu.cycle();
+        }
 
         next_frame().await
     }
