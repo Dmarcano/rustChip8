@@ -2,13 +2,16 @@ use std::collections::HashSet;
 
 use chip8::Chip8CPU;
 use macroquad::color::colors;
-use macroquad::prelude::*;
+use macroquad::ui::{hash, widgets};
+use macroquad::{prelude::*, ui};
 
 struct Chip8Emulator {
     cpu: Chip8CPU,
     texture: Texture2D,
     image: Image,
 }
+
+struct Chip8Keyboard {}
 
 // CHIP-8 Keypad    User Keyboard
 // +-+-+-+-+        +-+-+-+-+
@@ -154,13 +157,27 @@ async fn main() {
         image,
     };
 
-
     loop {
         clear_background(BLUE);
 
         emulator.draw();
+        // let frame = get_frame_time();
+
+        // println!("frame time: {}", frame);
 
         draw_fps();
+
+        ui::root_ui().window(
+            hash!(),
+            Vec2::new(screen_width() / 4., screen_height() / 2.),
+            Vec2::new(screen_width() / 2., screen_height() / 4.),
+            |ui| {
+                ui.button(None, "1");
+                ui.button(Vec2::new(screen_width() / 8., 0.0), "2");
+                ui.button(Vec2::new(screen_width() / 4., 0.0), "3");
+                ui.button(Vec2::new(3.*screen_width() / 8., 0.0), "C");
+            },
+        );
 
         // Handle keyboard input - get all currently pressed keys
         let pressed_keys = get_keys_down();
