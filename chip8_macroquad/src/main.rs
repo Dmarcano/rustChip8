@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use chip8::Chip8CPU;
 use macroquad::color::colors;
-use macroquad::ui::{hash, widgets};
+use macroquad::ui::{hash};
 use macroquad::{prelude::*, ui};
 
 struct Chip8Emulator {
